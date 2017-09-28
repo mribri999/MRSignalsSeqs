@@ -1,4 +1,4 @@
-% Simulate 
+% Simulate RF pulse over different positions and time
 
 dt = .004;		% ms, sample spacing
 tip = 90;		% desired tip.	
@@ -29,6 +29,8 @@ pos = [-.05:.0001:.05];	% 	Positions to simulate
 
 M = ones(3,length(tplot),length(pos));
 M(1:2,:)=0;				% M=[1;0;0];
+
+% Note that we neglect relaxation during the RF.
 
 for z = 1:length(pos)
   % Gradient rotation same for each interval

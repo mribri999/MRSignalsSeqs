@@ -37,20 +37,21 @@ pos = [-.05:.0001:.05];	% 	Positions to simulate
 M = ones(3,length(tplot),length(pos));
 M(1:2,:)=0;				% M=[1;0;0];
 
-% Start right after RF pulse - here's where steady state will be!
-% First set A,B for relaxation over TR
+% -- Start right after RF pulse - here's where steady state will be!
+% -- First set A,B for relaxation over TR
 
 A = diag([exp(-(TR-2)/T2) exp(-(TR-2)/T2) exp(-(TR-2)/T1)]);
 Bs = [0;0;1-exp(-(TR-2)/T1)];
 As = [0 0 0;0 0 0;0 0 1]*A;	% Perfect Spoiling
 
 
-% Relaxation during RF pulse:  A/B for each interval.
+% -- Relaxation during RF pulse:  A/B for each interval.
 
 At = diag([exp(-(dt)/T2) exp(-(dt)/T2) exp(-(dt)/T1)]);
 Bt = [0;0;1-exp(-(dt)/T1)];
 
 
+% -- Hard pulse approximation, with relaxation.
 for z = 1:length(pos)
   tt = sprintf('Position %d of %d',z,length(pos)); disp(tt); % Show progress
   % Gradient rotation same for each interval
