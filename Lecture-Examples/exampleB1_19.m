@@ -102,4 +102,8 @@ ylabel('Flip Angle (deg)');
 title('Excitation Profile vs Position');
 setprops;
 
+figure(4);
+fplot('sin(pi/180*x)*(1-exp(-5/500))/(1-exp(-5/500)*cos(pi/180*x))',[0,60]);
+lplot('Signal vs Flip Angle','Flip Angle (deg)','Signal');
+setprops;
 
