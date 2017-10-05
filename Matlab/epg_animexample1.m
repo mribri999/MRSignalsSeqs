@@ -4,14 +4,13 @@
 %	Some parameters:  (Remove % as needed!)
 
 %flips = [180 180 180 180 180] * pi/180;		% 180-refocusing angles
-%flips = [150 120 120 120 120] * pi/180;		% 120-refocusing angles
+flips = [150 120 120 120 120] * pi/180;		% 120-refocusing angles
 %flips = [120 120 120 120 120] * pi/180;		% 120-refocusing angles
 %flips = [150 120 120 120 120]*i * pi/180;	% 120-refoc. Non CPMG
 
 % -- These lines setup a short hyperecho sequence:
-flips = [1 1.3 1.2 1.3] .* exp(pi*i*[0.62 -.28 .28 .25]);
-%flips = [90+45*i 50-20*i 100 110*i] * pi/180; 
-flips=[flips pi -fliplr(conj(flips))];		% Hyperecho refocusing
+%flips = [1 1.3 1.2 1.3] .* exp(pi*i*[0.62 -.28 .28 .25]);
+%flips=[flips pi -fliplr(conj(flips))];		% Hyperecho refocusing
 
 
 
@@ -35,7 +34,9 @@ for k=1:length(flips)
   
     % -- If framenum and filestem exist, save to a file.
   for q=1:20	% Copy spin-echo frame many times to 'hold' in video.
-    epg_saveframe;
+    if (exist('epg_saveframe'))
+      epg_saveframe;
+    end;
   end;
 end;
 

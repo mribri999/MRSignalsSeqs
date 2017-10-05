@@ -19,7 +19,9 @@ for p=1:Nf
   drawnow;
   pause(0.05);
 
-  epg_saveframe;  % Save frame, if globals 'framenum' and 'filestem' exist 
+  if (exist('epg_saveframe'))
+    epg_saveframe;  % Save frame, if globals 'framenum' and 'filestem' exist 
+  end;
 
 end;
 
