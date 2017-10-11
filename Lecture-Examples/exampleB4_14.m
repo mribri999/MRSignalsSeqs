@@ -5,6 +5,8 @@
 
 % -- 1. SETUP PARAMETERS	
 R=2;				% Reduction Factor
+Na = 1000;			% #Runs for propagated noise
+cwid = 25;			% Gaussian coil sensitivity width
 
 % Coil noise covariance elements 
 n12=.3; n13=.13*i;
@@ -15,7 +17,6 @@ n34=.28;
 ndiag = diag([1 .9 1.2 1]);
 nscale = 0.1;			% Noise scaling
 
-cwid = 25;			% Gaussian coil sensitivity width
 
 
 % -- 2. IMAGE SHAPE 
@@ -118,7 +119,6 @@ end;
 
 % -- 9.  NOISE SIMULATION
 
-Na = 5000;
 noiseim = zeros(Na,length(x));
 
 for k = 1:Na		% Noise simulation (per channel)
@@ -135,7 +135,7 @@ nstd = std(real(noiseim));
 
 
 
-figure(6);
+figure(4);
 subplot(3,1,1);
 plot(x,abs(ima.'));	lplot('x','Coils','Aliased Images (Magnitude)'); 
 legend('Coil 1','Coil 2','Coil 3','Coil 4'); 
@@ -147,26 +147,26 @@ plot(x,imag(ima.'));	lplot('x','Coils','Aliased Images (Imaginary)');
 legend('Coil 1','Coil 2','Coil 3','Coil 4'); 
 setprops;
 
-figure(7);
+figure(5);
 plot(x,real(ims),'b--',x,imag(ims),'r--',x,abs(ims),'k-');	
 legend('Real','Imag','Magnitude');
 lplot('x','Signal','SENSE Image');
 setprops;
 
-figure(8);
+figure(6);
 plot(x,real(gfact),'k-',x,real(gmc),'r--',x,real(gcond),'b--');
 legend('g-factor','g_{multicoil}','g_{condition}');
 lplot('x','g-factor','g-factor across Image',[min(x) max(x) 0 3]);
 setprops;
 
  	 
-figure(9);
+figure(7);
 plot(x,real(nmean),'b-',x,real(nstd),'r--');
 legend('Mean','Std dev');
-lplot('x','Noise mean / std-dev','Pseudomultiple Noise Statistics');
+lplot('x','Noise mean / std-dev','Propagated Noise Statistics');
 setprops;
 
-figure(10);
+figure(8);
 plot(x,real(inoise));
 a = axis; a(3)=-.5; 
 lplot('x','Noise','Calculated Noise sqrt(C Psi C)',a);
