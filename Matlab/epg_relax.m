@@ -19,6 +19,10 @@
 
 function [FpFmZ,EE] = epg_gt(FpFmZ,T1,T2,T)
 
+if(T1 < 0 || T2 < 0 || T < 0)
+    warning('negative values for time')
+end
+
 E2 = exp(-T/T2);
 E1 = exp(-T/T1);
 
