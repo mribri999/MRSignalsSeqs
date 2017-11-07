@@ -1,5 +1,5 @@
-function epg_showorder(FZ,n,frac)
-%function epg_showorder(FZ,n,frac)
+function epg_showorder(FZ,n,frac,Nspins)
+%function epg_showorder(FZ,n,frac,Nspins)
 %
 %	Show a single order (n)EPG state in 2x2 plot
 %
@@ -7,7 +7,7 @@ function epg_showorder(FZ,n,frac)
 %	n = order of state (# twists)
 %	frac = fraction of twist, if animating.
 %
-Nspins = 24;
+if (nargin < 4) Nspins = 23; end;
 myc = mycolors(Nspins);
 
 if (nargin < 1) FZ = [.75;.25;-.433i]; end;
@@ -20,12 +20,12 @@ Q(:,n+1)=FZ;
 
 clf;
 subplot(2,2,1);
-epg_showstate(Q,frac);
+epg_showstate(Q,frac,1,Nspins);
 
 
 subplot(2,2,2);
 Q1 = Q; Q1(1:2,:)=0;
-epg_showstate(Q1,frac);
+epg_showstate(Q1,frac,1,Nspins);
 axis([-1 1 -1 1 -1 1]);
 lighting phong; camlight right;
 tt = sprintf('Z_{%d} = %0.2f + i%0.2f',n,real(FZ(3)),imag(FZ(3)));
@@ -34,7 +34,7 @@ title(tt);
 
 subplot(2,2,3);
 Q1 = Q; Q1(2:3,:)=0;
-epg_showstate(Q1,frac);
+epg_showstate(Q1,frac,1,Nspins);
 axis([-1 1 -1 1 -1 1]);
 lighting phong; camlight right;
 view(0,90);
@@ -44,7 +44,7 @@ title(tt);
 
 subplot(2,2,4);
 Q1 = Q; Q1(3,:)=0; Q1(1,:)=0;
-epg_showstate(Q1,frac);
+epg_showstate(Q1,frac,1,Nspins);
 axis([-1 1 -1 1 -1 1]);
 lighting phong; camlight right;
 view(0,90);

@@ -12,7 +12,7 @@ function epg_showstate(FZ,frac,scale,Nspins)
 %	Get arrow3D to make these look nicer!
 %	See epg_show and epg_showorder
 %
-if (nargin < 4) Nspins = 24; end;
+if (nargin < 4) Nspins = 23; end;
 myc = mycolors(Nspins);
 
 if (nargin < 1) FZ = [.75;.25;-.433i]; end;
