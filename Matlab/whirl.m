@@ -168,13 +168,20 @@ g1=g(1:round(ng1/upsamp));
 g2=g(round(ng1/upsamp)+1:round(ng2/upsamp));
 g3=g(round(ng2/upsamp)+1:length(g));
 
-figure(1);
-for q=1:N
-plot(k*exp(2*pi*i*q/N));
-hold on;
+%  ------ Plot, for testing. -----------
+if (1==1)
+    figure(1);
+    plotgradinfo(g(:),Ts);
+
+
+    figure(2);
+    for q=1:N
+	plot(k*exp(2*pi*i*q/N));
+	hold on;
+    end;
+    hold off;
+    axis equal;
+    title('K-space trajectory...');
 end;
-hold off;
-axis equal;
-title('K-space trajectory...');
 
 
