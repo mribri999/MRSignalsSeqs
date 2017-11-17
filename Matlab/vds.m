@@ -225,28 +225,28 @@ s = s(1:length(k));
 
 % ========= Plot gradients and slew rates. ==========
 
-time = time(1:10:end);
-g = g(1:10:end);
-k = k(1:10:end);
-s = s(1:10:end);
+tp= time(1:10:end);
+gp = g(1:10:end);		% Plotting undersamples
+kp = k(1:10:end);
+sp= s(1:10:end);
 
 
 subplot(2,2,1);
-plot(real(k),imag(k));
+plot(real(kp),imag(kp));
 lplot('kx (cm^{-1})','ky (cm^{-1})','ky vs kx');
 axis('square');
 
 subplot(2,2,2);
-plot(time,real(k),'c-',time,imag(k),'g-'); %,time,abs(k),'k-');
+plot(tp,real(kp),'c-',tp,imag(kp),'g-'); %,tp,abs(kp),'k-');
 lplot('Time (s)','k (cm^{-1})','k-space vs Time');
 
 
 subplot(2,2,3);
-plot(time,real(g),'c-',time,imag(g),'g-'); %,time,abs(g),'k-');
+plot(tp,real(gp),'c-',tp,imag(gp),'g-'); %,tp,abs(gp),'k-');
 lplot('Time (s)','g (G/cm)','Gradient vs Time');
 
 subplot(2,2,4);
-plot(time,real(s),'c-',time,imag(s),'g-',time,abs(s),'k-');
+plot(tp,real(sp),'c-',tp,imag(sp),'g-',tp,abs(sp),'k-');
 lplot('Time (s)','s (G/cm/s)','Slew-Rate vs Time');
 
 if (exist('setprops')) setprops; end;
