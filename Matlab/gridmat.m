@@ -58,8 +58,8 @@ sgrid = 0*smatx;		% allocate
 % -- Go through k-space samples to do convolution
 
 for p = 1:length(ksp)
-  tt = sprintf('Gridding sample %d of %d',p,length(ksp));
-  disp(tt);
+  %tt = sprintf('Gridding sample %d of %d',p,length(ksp));
+  %disp(tt);
 
   gridx = smatx + ikxi(p);	% grid of 'closest' integer pts
   gridy = smaty + ikyi(p);	% same in y	
