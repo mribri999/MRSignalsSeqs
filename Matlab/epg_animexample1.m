@@ -4,9 +4,10 @@
 %	Some parameters:  (Remove % as needed!)
 
 %flips = [180 180 180 180 180] * pi/180;		% 180-refocusing angles
-flips = [150 120 120 120 120] * pi/180;		% 120-refocusing angles
+%flips = [150 120 120 120 120] * pi/180;		% 120-refocusing angles
 %flips = [120 120 120 120 120] * pi/180;		% 120-refocusing angles
 %flips = [150 120 120 120 120]*i * pi/180;	% 120-refoc. Non CPMG
+flips = [120 60 60 60 60] * pi/180;		% 60-refocusing angles
 
 % -- These lines setup a short hyperecho sequence:
 %flips = [1 1.3 1.2 1.3] .* exp(pi*i*[0.62 -.28 .28 .25]);
