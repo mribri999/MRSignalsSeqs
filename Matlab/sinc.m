@@ -16,5 +16,7 @@ f2 = find(x~=0);
 y(f1)=1;
 y(f2) = sin(pi*x(f2))./(pi*x(f2));
 
+y = reshape(y,sz);
+
 
 

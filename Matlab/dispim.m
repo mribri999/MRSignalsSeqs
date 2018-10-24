@@ -8,7 +8,7 @@
 % ===========================================================
 
 
-function dispim(im,low,high)
+function [low,high] = dispim(im,low,high)
 
 im = squeeze((im));
 
