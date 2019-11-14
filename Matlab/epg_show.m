@@ -39,10 +39,10 @@ for mm = 1:m			% -- Rows (F+,F-,Z)
 		imag(sum(Q(:)))); end;
    if (mm==3) tt = sprintf('Z_{%d} = %0.2f + %0.2f',nn-1,real(sum(Q(:))), ...
 		imag(sum(Q(:)))); end;
-   if (mm==2) && (nn==1) Q=FZ; tt='All'; end;	% All states in F0* position
+   if (mm==2) && (nn==1) Q=FZ; tt='3D View'; end;	% All states in F0* position
 
    % -- Plot this state
-   if (showtwists==0)
+   if (showtwists==0 || (mm==2 && nn==1))	% Don't twist 3D plot
      epg_showstate(Q,frac,scale,Nspins);
    else
      voxvar = 1;		  % -- Variation along mz for F states

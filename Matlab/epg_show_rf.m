@@ -1,10 +1,13 @@
+%function [FpFmZ,RR] = epg_show_rf(FpFmZ,alpha,phi,Nanim,showtwists)
 %
-%function [FpFmZ,RR] = epg_show_rf(FpFmZ,alpha,phi)
 %	Propagate EPG states through an RF rotation of 
-%	alpha, with phase phi (both radians).
+%	alpha, with phase phi (both radians), plotting frames.
 %	
 %	INPUT:
 %		FpFmZ = 3xN vector of F+, F- and Z states.
+%		alpha, phi = flip angle and phase.
+%               Nanim = Number of frames
+%               showtwists = 1 to show twist, 0 to have all spins from origin
 %
 %       OUTPUT:
 %               FpFmZ = Updated FpFmZ state.
@@ -15,9 +18,14 @@
 %
 %	B.Hargreaves.
 %
-function [FpFmZ,RR] = epg_rf(FpFmZ,alpha,phi)
+function [FpFmZ,RR] = epg_show_rf(FpFmZ,alpha,phi,Nanim,showtwists)
 
-Nanim = 16;
+if (nargin < 1 || length(FpFmZ)<1) FpFmZ = [0;0;1]; end;
+if (nargin < 3 || length(phi)<1) phi = pi/2; end;
+if (nargin < 2 || length(alpha)<1) alpha = pi/2; end;		
+if (nargin < 4 || length(Nanim)<1) Nanim=16; end;
+if (nargin < 5 || length(showtwists)<1) showtwists=0; end;
+
 
 % -- From Weigel at al, JMR 205(2010)276-285, Eq. 8.
 
@@ -35,7 +43,7 @@ RRa = [(cos(alpha/2))^2 exp(2*i*phi)*(sin(alpha/2))^2 -i*exp(i*phi)*sin(alpha);
 % -- Animate.
 for k=1:Nanim
   FpFmZ = RRa * FpFmZ;
-  epg_show(FpFmZ);
+  epg_show(FpFmZ,[],[],[],showtwists);
   drawnow;
 end;
 
