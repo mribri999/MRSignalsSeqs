@@ -1,31 +1,49 @@
-function epg_showstate(FZ,frac,scale,Nspins)
-%function epg_showstate(FZ,frac,scale,Nspins)
+function epg_showstate(FZ,frac,scale,Nspins,voxelvar)
+%function epg_showstate(FZ,frac,scale,Nspins,voxelvar)
 %
-%	Show an EPG representation state in 3D plot.
-%	(Zero-out other states if just wanting to show 1 state)
+%	Show an EPG representation in a single 3D plot.
+%	(Zero-out other states if just wanting to show 1 basis function.
 %
 %	FZ = 3x1 column vector of F+,F- and Z.
 %	frac = fraction of twist, if animating.
 %	scale = axis scaling [-scale scale] defaults to 1.
 %	Nspins = #spins to show, default = 24.
+%	voxelvar = origin of spin vectors (0=center, 1=along mz, 2=along mx)
 %
 %	Get arrow3D to make these look nicer!
 %	See epg_show and epg_showorder
 %
-if (nargin < 4) Nspins = 23; end;
+if (nargin < 4 || length(Nspins)<1) Nspins = 23; end;
 myc = mycolors(Nspins);
 
-if (nargin < 1) FZ = [.75;.25;-.433i]; end;
-if (nargin < 2) frac = 0; end;
-if (nargin < 3) scale = 1; end;
+if (nargin < 1 || length(FZ)<1) FZ = [.75;.25;-.433i]; end;
+if (nargin < 2 || length(frac)<1) frac = 0; end;
+if (nargin < 3 || length(scale)<1) scale = 1; end;
+if (nargin < 5 || length(voxelvar)<1) voxelvar=0; end;
+
+% -- Get vectors to plot
 
 M = epg_FZ2spins(FZ,Nspins,frac)*Nspins;
+
+% -- Figure out spin origins (twist vs all at 0 etc)
+if (voxelvar==0) spinorig = 0*M; 	% -- All at origin (most common)
+else
+  spinrange = ([1:Nspins]-.5)/Nspins-.5; 	% voxel dimension	
+  spinrange = 2*spinrange;			% fill plots
+  if (voxelvar==1) 
+    spinorig = [zeros(2,Nspins); spinrange];	% Variation along mz
+  else 
+    spinorig = [spinrange; zeros(2,Nspins)];	% Variation along mx (for Z_n)
+  end;
+end;
+
+% -- Plot vectors.
 hold off;
 for k=1:Nspins
   if (exist('arrow3D'))
-    arrow3D([0 0 0],M(:,k),myc(k,:),0.8,0.03*scale);
+    arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8,0.03*scale);
   else
-    h = plot3([0 M(1,k)],[0 M(2,k)],[0 M(3,k)]);
+    h = plot3([spinorig(1,k) M(1,k)],[spinorig(2,k) M(2,k)],[spinorig(3,k) M(3,k)]);
     set(h,'LineWidth',3);
     set(h,'Color',myc(k,:));
     hold on;
