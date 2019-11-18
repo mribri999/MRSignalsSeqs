@@ -23,7 +23,7 @@
 function [FpFmZ] = epg_show_grad(FpFmZ,noadd,Nanim,showtwists)
 
 if (nargin < 2) noadd=0; end;	% Add by default.  
-if (nargin < 3 || length(Nanim)<1) Nanim=16; end;
+if (nargin < 3 || length(Nanim)<1) Nanim=32; end;
 if (nargin < 4 || length(showtwists)<1) showtwists=0; end;
 
 % -- Added for animation... 

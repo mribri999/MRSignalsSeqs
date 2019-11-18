@@ -23,9 +23,11 @@ function [FpFmZ,RR] = epg_show_rf(FpFmZ,alpha,phi,Nanim,showtwists)
 if (nargin < 1 || length(FpFmZ)<1) FpFmZ = [0;0;1]; end;
 if (nargin < 3 || length(phi)<1) phi = pi/2; end;
 if (nargin < 2 || length(alpha)<1) alpha = pi/2; end;		
-if (nargin < 4 || length(Nanim)<1) Nanim=16; end;
+if (nargin < 4 || length(Nanim)<1) Nanim=32; end;
 if (nargin < 5 || length(showtwists)<1) showtwists=0; end;
 
+[m,n] = size(FpFmZ);
+if (m<3) FpFmZ(3,1)=0; end;
 
 % -- From Weigel at al, JMR 205(2010)276-285, Eq. 8.
 
@@ -45,7 +47,7 @@ FZ = FpFmZ;
 % -- Animate.
 for k=1:Nanim
   FZ = RRa * FZ;
-  epg_show(FZ,[],[],[],showtwists);
+  epg_show(FZ(1:m,:),[],[],[],showtwists);
   drawnow;
 end;
 
