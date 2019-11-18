@@ -34,14 +34,15 @@ if (N < 2*Ns-1) warning('Number of spins should be at least double number of sta
 % -- Use a matrix for FFT to support arbitrary N.
 %  	This is because we are going from a discrete set of 
 %	coefficients to a "continuous" distribution of Mx,My,Mz
-x = [0:N-1]/N;		% Fraction of a cycle for spins locations.
+x = [0:N-1]/N-0.5;	% Fraction of a cycle for spins locations.
 ph = exp(i*2*pi*x.'*([-(Ns-1):(Ns-1)]+frac));	% Phasors for Fourier Xform
 						% Note: frac = 0 usually!
 
 
 
-Fstates = [fliplr(conj(FpFmZ(2,2:end))) FpFmZ(1,:)]; 		% Stretched out
-Mxy = ph * Fstates.';			% Fourier Transform to Mxy.
+Fstates = [fliplr(conj(FpFmZ(2,2:end))) FpFmZ(1,:)]; 	% Stretched out
+					% Vector of Fp (-n,n)
+Mxy = ph * Fstates.';			% 1D Fourier Transform to Mxy.
 
 ph = exp(i*2*pi*x.'*[0:Ns-1]);		% Phasors for Mz transform
 FpFmZ(3,1)=FpFmZ(3,1)/2;		% Account for discretization

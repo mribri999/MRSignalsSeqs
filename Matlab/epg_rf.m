@@ -10,7 +10,9 @@
 %               FpFmZ = Updated FpFmZ state.
 %		RR = RF rotation matrix (3x3).
 %
+
 %	SEE ALSO:
+
 %		epg_grad, epg_grelax
 %
 %	B.Hargreaves.
@@ -18,6 +20,9 @@
 function [FpFmZ,RR] = epg_rf(FpFmZ,alpha,phi)
 
 % -- From Weigel at al, JMR 205(2010)276-285, Eq. 8.
+
+if (nargin < 3) phi = pi/2; end;
+if length(FpFmZ)<3 FpFmZ = [0;0;1]; end;
 
 if (abs(alpha)>2*pi) warning('epg_rf:  Flip angle should be in radians!'); end;
 

@@ -40,11 +40,15 @@ RRa = [(cos(alpha/2))^2 exp(2*i*phi)*(sin(alpha/2))^2 -i*exp(i*phi)*sin(alpha);
       exp(-2*i*phi)*(sin(alpha/2))^2 (cos(alpha/2))^2 i*exp(-i*phi)*sin(alpha);
       -i/2*exp(-i*phi)*sin(alpha) i/2*exp(i*phi)*sin(alpha)      cos(alpha)];
 
+FZ = FpFmZ;
+
 % -- Animate.
 for k=1:Nanim
-  FpFmZ = RRa * FpFmZ;
-  epg_show(FpFmZ,[],[],[],showtwists);
+  FZ = RRa * FZ;
+  epg_show(FZ,[],[],[],showtwists);
   drawnow;
 end;
+
+FpFmZ = RR * FpFmZ;
 
 
