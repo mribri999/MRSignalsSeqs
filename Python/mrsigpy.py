@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 19 08:57:48 2019
 
-@author: Joshua Kaggie, Brian Hargreaves
-"""
+# -----------------------------------------------------
+# MR Signal Python Library
+# -----------------------------------------------------
+#
+# Basic MRI signal simulations, intended primaraly for
+# learning and low-to-medium complexity MRI simulations.
+#
+# Derived from Stanford RAD229 Class (Matlab) functions
+#
+# Created on Tue Nov 19 08:57:48 2019
+# author: Joshua Kaggie, Brian Hargreaves
+# -----------------------------------------------------
+
 
 import numpy as np
 
@@ -22,7 +31,11 @@ def relax(t,T1 = 4., T2 = 0.1, combine=True):
     return A,B
 
 
-#left handed
+#--------------------------------------------------------
+#  By convention all rotations are left-handed
+#--------------------------------------------------------
+
+# Returns 3x3 matrix for left-handed rotation about x
 def xrot(angle = 0., in_degs = True):
     if in_degs:
         angle = angle*np.pi/180.
@@ -31,7 +44,7 @@ def xrot(angle = 0., in_degs = True):
     M = np.array([[1.,0.,0.],[0., c, s],[0,-s, c]])
     return M
 
-#This is also equivalent to help
+# Returns 3x3 matrix for left-handed rotation about y
 def yrot(angle = 0., in_degs = True):
     if in_degs:
         angle = angle*np.pi/180.
@@ -41,7 +54,7 @@ def yrot(angle = 0., in_degs = True):
     return M
 
 
-
+# Returns 3x3 matrix for left-handed rotation about z
 def zrot(angle = 0., in_degs = True):
     'This is equivalent to help'
     if in_degs:
@@ -52,6 +65,7 @@ def zrot(angle = 0., in_degs = True):
     return M
 
 
+# Returns 3x3 matrix for rotation about axis in x-y plan phi away from x
 def throt(theta = 0., phi=0., in_degs = True):
     'This is equivalent to help'
     if in_degs:
@@ -68,7 +82,7 @@ def throt(theta = 0., phi=0., in_degs = True):
     
     return M        
 
-
+# Converts a time vector to the corresponding frequency vector of an FFT
 def time2freq(t):
     dt = t[1]-t[0]
     num_p = len(t)
@@ -77,7 +91,9 @@ def time2freq(t):
     return f
 
 
-
+# abprop propagates a series operations Ai,Bi into a single A,B
+# A = ... A3*A2*A1    B = ... B3 + A3*(B2 + A2*B1
+#
 # Example:
 # TR = 1
 # TI = 0.5
@@ -136,30 +152,6 @@ def magphase(x,arr):
 
 
 
-
-
-
-
-
-
-
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
      
      
 
