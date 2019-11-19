@@ -1,0 +1,38 @@
+# MRI Python functions
+# Brian Hargreaves
+
+import scipy as sp
+import numpy as np
+import math
+
+# --- m0 Equilibrium Magnietization
+# --- m0 returns equilibrium Magnetization, duplicated numspins times
+#
+def m0(numspins=1):
+  m = np.repeat( np.array([[0],[0],[1.]]) ,numcols,axis=1)
+  return m
+
+
+# --- xrot - X rotation
+# --- Returns a rotation matrix about x of specified angle in degrees.
+#
+def xrot(angledeg=60):
+  angle = math.pi/180 * angle
+  r = np.array([[1., 0, 0], [0, math.cos(angle), math.sin(angle)], [0, -math.sin(angle), math.cos(angle)]])
+  return r
+
+
+
+
+class MrSpin:
+  def __init__(self, magnetization, t1=1.3, t2=0.1):
+    self.t1 = t1
+    self.t2 = t2
+    self.m = np.array([[0],[0],[1.]])
+
+  def show(self):
+    print("MR Spin with T1,T2,m = " + self.t1 + self.t2 + self.m)
+
+
+
+
