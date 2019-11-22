@@ -12,6 +12,7 @@ function [FpFmZ] = epg_trim(FpFmZ,thres)
 %
 %       B.Hargreaves.
 
+if (nargin < 2) thres=0.01; end;
 
 f = find(sum(abs(FpFmZ))>=thres);
 fn = max(f);
