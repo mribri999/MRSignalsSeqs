@@ -23,7 +23,8 @@ def relax(t,T1 = 4., T2 = 0.1, combine=True):
     E1 = np.exp(-t/T1)
     E2 = np.exp(-t/T2)
     A = np.diag([E2, E2, E1])
-    B = np.array([0,0,1-E1])        
+    B = np.array([0,0,1-E1]) 
+       
     B = np.reshape(B,[3,1])
     if combine:
         A = np.hstack([A,B])   ### ADD TO FOURTH AXIS!  HSTACK????
@@ -305,7 +306,7 @@ def gaussian(x,mn,sig):
     return np.exp(-(x-mn)**2/(2*sig**2))/np.sqrt(2*np.pi)/sig
 
 def ghist(data,gmean = None,gsig = None,bins = None,
-          gtitle = 'Data and Gaussian',gleg1,gleg2):
+          gtitle = 'Data and Gaussian'):
     N  = len(data)
 
 def gridmat():
