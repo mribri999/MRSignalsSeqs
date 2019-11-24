@@ -19,6 +19,13 @@
 %
 function [FpFmZ,RR] = epg_rf(FpFmZ,alpha,phi)
 
+if (nargin < 1) FpFmZ = [0;0;1];	end;	% Default is M=M0
+if (nargin < 2) alpha = pi/2;		end;	% Default is pi/2
+if (nargin < 3) phi = 0;		
+  tt = sprintf('epg_rf defaulting to M0 with alpha=%g, phi=%g',alpha,phi);
+  disp(tt);
+end;	% Default is pi/2
+
 % -- From Weigel at al, JMR 205(2010)276-285, Eq. 8.
 
 if (nargin < 3) phi = pi/2; end;

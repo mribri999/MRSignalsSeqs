@@ -297,7 +297,73 @@ def displogim(im):
     
     im = im - lowexp
     dispim(im)
+   
+
+def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
+
+    if etl is None: etl = len(flipangle)
+    if esp is None: esp = len(flipangle):
+        
+    etl = int(etl)
+    esp = int(esp)
+
+    if len(flipangle)==1 and etl>1 and np.abs(flipangle).all()<np.pi:
+        flipangle[1] = flipangle[0]
+        flipangle[0] = np.pi*np.exp(1j*angle(flipangle[1])+np.flipangle[1])/2
+        
+    P = np.zeros((3,2*etl))
+    P[2,0] = 1
+    Pstore = np.zeros((4*etl, etl))
+    Zstore = np.zeros((2*etl, etl))
     
+    P = epg_rf(P,np.pi/2, np.pi/2)
+    s = np.zeros(1,etl)
+    
+    for ech in np.arange(etl):
+        P = epg_grelax(P,T1,T2,esp//2,1,0,1,1)
+        P = epg_rf(P,abs(flipangle(ech)),angle(flipangle(ech)))
+        P = epg_grelax(P,T1,T2, eps//2,1,0,1,1)
+        
+        s[ech] = P[0,0]
+        Pstore[2*etl:r*etl,ech] = P[1]
+        Pstore[:2*etl,ech]=np.flipud(P[0])
+        Zstore[:,ech] = P(2)  #  what does .' mean in matlab??
+        
+    if plot:
+        pass
+        #room to plot things
+    
+    return s,phasediag,P
+
+
+
+def epg_gt(FpFmZ, T1, T2, T):
+    if (T1 < 0) or T2<0 or T<0:
+        print('Your values should not be negative...  Are you a time-traveller?')
+    E2 = np.exp(-T/1./T2)
+    E1 = np.exp(-T/1./T1)
+    
+    EE = np.diag([E2,E2,E1])
+    RR = 1-E1
+    
+    FpFmZ = np.matmul(EE,FpFmZ)
+    FpFmZ[2,0] = FpFmZ[2,0]+RR
+    return FpFmZ
+    
+
+
+
+def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0)
+
+    Ns = np.shape(FpFmZ)[1]
+    if N is None: N = 2.*Ns-1
+
+    x = np.arange(N+1).astype(np.float)/N-0.5
+    ph = np.exp(1j*2.*np.pi*np.conj(x) * (np.arange(-(Ns),(Ns+1))+frac) )  #matmul????
+
+    Fstates = np.hstack([np.fliplr(np.conj(FpFmZ[1,1:])), FpFmz[0]])
+    
+
     
     
 
@@ -348,6 +414,29 @@ def epg_rf(FpFmZ = [[0],[0],[1]], angle = 90.,phi = 90, in_degs = True, return_r
 
     
     
+    Mxy = np.matmul(ph,np.transpose(Fstates))
+    ph = np.exp(1j*2*np.pi*x*np.arange(Ns))
+    FpFmZ[2,0] = FpFmZ[2,0]/2.
+    Mz = 2.*np.real(np.matmul(ph,np.transpose(FpFmZ[2])))
+    M = [np.real(Mxy), np.imag(Mxy), Mz]
+    return M
+
+
+
+def epg_stim_calc(flips, in_degs = True):
+    P = [[0],[0],[1]]
+    
+    if in_degs:
+        flips = np.array(flips)*np.pi/180.
+    
+    for flip in flips:
+        P = epg_rf(P, flips,np.pi/2, in_degs = in_degs)        
+        P = epg_grelax(P,1,.2,0,1,0,1)
+    S = P[0,0]
+    return S,P
+
+
+
 def ft(dat):
     return np.fft.fftshift(np.fft.fft2(np.fft.fftshift(dat)))
 
