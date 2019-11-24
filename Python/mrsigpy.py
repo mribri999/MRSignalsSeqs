@@ -303,7 +303,7 @@ def displogim(im):
 def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
 
     if etl is None: etl = len(flipangle)
-    if esp is None: esp = len(flipangle):
+    if esp is None: esp = len(flipangle)
         
     etl = int(etl)
     esp = int(esp)
@@ -355,7 +355,7 @@ def epg_gt(FpFmZ, T1, T2, T):
 
 
 
-def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0)
+def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
 
     Ns = np.shape(FpFmZ)[1]
     if N is None: N = 2.*Ns-1
@@ -397,12 +397,11 @@ def epg_trim(FpFmZ, thres):
     return FpFmZ
 
 
-def epg_rf(FpFmZ = [[0],[0],[1]], angle = 90.,phi = 90, in_degs = True, return_rotation = False):
+def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_rotation = False):
     if in_degs:
-        angle = angle*np.pi/180.
+        alpha = alpha*np.pi/180.
         phi = phi*np.pi/180.
         
-    alpha = angle
     RR = [[(np.cos(alpha/2.))**2., np.exp(2.*1j*phi)*(np.sin(alpha/2.))**2., -1j*np.exp(1j*phi)*np.sin(alpha)],
       [np.exp(-2.*1j*phi)*(np.sin(alpha/2.))**2., (np.cos(alpha/2.))**2., 1j*np.exp(-1j*phi)*np.sin(alpha)],
       [-1j/2.*np.exp(-1j*phi)*np.sin(alpha), 1j/2.*np.exp(1j*phi)*np.sin(alpha),      np.cos(alpha)]];
