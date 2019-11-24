@@ -365,6 +365,57 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0)
 
     Fstates = np.hstack([np.fliplr(np.conj(FpFmZ[1,1:])), FpFmz[0]])
     
+
+    
+    
+
+
+def epg_grad(FpFmZ=[[1],[1],[0]], noadd=0, positive = True):
+    if not noadd:
+        FpFmZ = np.hstack([FpFmZ, [[0],[0],[0]]])  
+    if positive:
+        FpFmZ[0][1:] = FpFmZ[0][:-1]
+        FpFmZ[1][:-1] = FpFmZ[1][1:]
+        FpFmZ[0,0] = np.conj(FpFmZ[1,0])
+    else:
+        FpFmZ[1][1:] = FpFmZ[1][:-1]
+        FpFmZ[0][:-1] = FpFmZ[0][1:]
+        FpFmZ[1,0] = np.conj(FpFmZ[0,0])
+        
+    return FpFmZ
+
+def epg_mgrad(*kw, **kws):
+    "Negative gradients"
+    return epg_grad(positive = False, *kw, **kws)    
+
+
+def epg_trim(FpFmZ, thres):
+    #f = np.where(np.sum(np.abs(FpFmZ),axis=0)>= thres)
+    #fn = np.max(f)
+    fn = np.argmax(np.sum(np.abs(FpFmZ),axis=0)>= thres)  ## same type of code, different method
+    FpFmZ = FpFmZ[:,:fn+1]
+    return FpFmZ
+
+
+def epg_rf(FpFmZ = [[0],[0],[1]], angle = 90.,phi = 90, in_degs = True, return_rotation = False):
+    if in_degs:
+        angle = angle*np.pi/180.
+        phi = phi*np.pi/180.
+        
+    alpha = angle
+    RR = [[(np.cos(alpha/2.))**2., np.exp(2.*1j*phi)*(np.sin(alpha/2.))**2., -1j*np.exp(1j*phi)*np.sin(alpha)],
+      [np.exp(-2.*1j*phi)*(np.sin(alpha/2.))**2., (np.cos(alpha/2.))**2., 1j*np.exp(-1j*phi)*np.sin(alpha)],
+      [-1j/2.*np.exp(-1j*phi)*np.sin(alpha), 1j/2.*np.exp(1j*phi)*np.sin(alpha),      np.cos(alpha)]];
+    
+    if return_rotation:
+        return RR
+    else:
+        return np.matmul(RR,FpFmZ)
+
+
+
+    
+    
     Mxy = np.matmul(ph,np.transpose(Fstates))
     ph = np.exp(1j*2*np.pi*x*np.arange(Ns))
     FpFmZ[2,0] = FpFmZ[2,0]/2.
