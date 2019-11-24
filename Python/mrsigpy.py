@@ -338,6 +338,7 @@ def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, e
 
 
 
+
 def epg_gt(FpFmZ, T1, T2, T):
     if (T1 < 0) or T2<0 or T<0:
         print('Your values should not be negative...  Are you a time-traveller?')
