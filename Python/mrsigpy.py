@@ -357,14 +357,41 @@ def epg_gt(FpFmZ, T1, T2, T):
 
 def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
 
-    Ns = np.shape(FpFmZ)[1]
+    Ns = np.shape(FpFmZ)[1]-1
     if N is None: N = 2.*Ns-1
 
-    x = np.arange(N+1).astype(np.float)/N-0.5
-    ph = np.exp(1j*2.*np.pi*np.conj(x) * (np.arange(-(Ns),(Ns+1))+frac) )  #matmul????
+    # -- Make Fourier matrix - there *must* be a faster way!
+    z = (np.arange(N).astype(np.float)+0.5)/N-0.5   # z = fraction across voxel
+    z = np.expand_dims(z, axis=0)
+    phz = (1j*2.*np.pi*z)                   # 2pi*i*z) 
+    inds = np.arange(-(Ns),(Ns+1))+frac	    # State number n=[-Ns:Ns]
+    inds = np.expand_dims(inds,axis=1)
+    fmat = np.exp(np.matmul(inds,phz))      # Fourier matrix
+    #print("fmat = %s" % fmat)
 
-    Fstates = np.hstack([np.fliplr(np.conj(FpFmZ[1,1:])), FpFmz[0]])
-    
+    # -- Combine Fminus and Fplus states (or Fn for n<0 and n>=0) 
+    Fstates = np.hstack([np.fliplr(np.conj(FpFmZ[1:2,1:])), FpFmZ[0:1,0:]])
+
+    # -- Get last row (Z states) 
+    Zstates = FpFmZ[2:,:]
+    #print("Z states = %s" % Zstates)
+
+    # -- Fourier transform to Mxy
+    Mxy = np.matmul(Fstates,fmat)
+    #print("Mxy is %s" % Mxy)
+
+    # -- Fourier transform to Mz
+    fmatz = fmat[Ns:,:]
+    #print("fmatz = %s" % fmatz)
+    Mz = np.real(np.matmul(Zstates,fmat[Ns:,:]))
+    #print("Mz is %s " % Mz)
+
+    # -- Extract Mx, My and Mz and return as 3xN.
+    spins = np.concatenate((np.real(Mxy),np.imag(Mxy),Mz),axis=0)
+
+    return spins
+
+
 
     
     
@@ -376,10 +403,12 @@ def epg_grad(FpFmZ=[[1],[1],[0]], noadd=0, positive = True):
     if positive:
         FpFmZ[0][1:] = FpFmZ[0][:-1]
         FpFmZ[1][:-1] = FpFmZ[1][1:]
+        FpFmZ[1][-1] = 0;
         FpFmZ[0,0] = np.conj(FpFmZ[1,0])
     else:
         FpFmZ[1][1:] = FpFmZ[1][:-1]
         FpFmZ[0][:-1] = FpFmZ[0][1:]
+        FpFmZ[0][-1] = 0;
         FpFmZ[1,0] = np.conj(FpFmZ[0,0])
         
     return FpFmZ
