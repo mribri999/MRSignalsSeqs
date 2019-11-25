@@ -15,6 +15,7 @@
 
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 def relax(t,T1 = 4., T2 = 0.1, combine=True):
     T1 = T1 * 1.
@@ -567,7 +568,43 @@ def magphase(x,arr):
     
     fig1 = plt.subplot(2,1,1)
     plt.plot(x,phase/np.pi)
-    
+   
+
+def epg_showstate(ax,FZ,Nspins):
+
+  M = epg_FZ2spins(FZ,Nspins);
+  scale = 1.
+
+  mx = M[0:1,:]
+  my = M[1:2,:]
+  mz = M[2:3,:]
+  z = 2*(np.arange(0,Nspins)+0.5)/Nspins;
+
+  ax.quiver(mx*0, my*0, z, mx,my,mz,normalize=True)
+  ax.set(xlim=(-scale,scale),ylim=(-scale,scale),zlim=(-scale,scale))
+  return
+
+
+def epg_show(FZ,Nspins=19):
+# STARTING to write this!
+# Basic version works... lots to do!
+
+  Nspins=19
+
+  m = np.shape(FZ)[0]
+  n = np.shape(FZ)[1]
+
+  fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
+  for mm in range(m):
+    for nn in range(n):
+      figax = fig.add_subplot(m,n,nn+mm*n+1, projection='3d') 
+      Q = 0*FZ 
+      Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
+      epg_showstate(figax,Q,Nspins) 
+     
+      # Label subplot with F/Z state and value. 
+  return
+ 
 
 
 def circ(radius, nx,ny):
