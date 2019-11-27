@@ -374,9 +374,10 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     Fstates = np.hstack([np.fliplr(np.conj(FpFmZ[1:2,1:])), FpFmZ[0:1,0:]])
 
     # -- Get last row (Z states) 
-    Zstates = FpFmZ[2:,:]
-    #print("Z states = %s" % Zstates)
-
+    Zstates = 2.*FpFmZ[2:,:]		# Double to account for one-sided FT.
+    Zstates[0,0]=Zstates[0,0]/2		# Don't double Z0
+    print("Z states (doubled for n>0) = %s" % Zstates)
+    
     # -- Fourier transform to Mxy
     Mxy = np.matmul(Fstates,fmat)
     #print("Mxy is %s" % Mxy)
@@ -384,8 +385,8 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     # -- Fourier transform to Mz
     fmatz = fmat[Ns:,:]
     #print("fmatz = %s" % fmatz)
-    Mz = 2.*np.real(np.matmul(Zstates,fmat[Ns:,:]))
-    Mz[2,0] = Mz[2,0]/2.	# Z0 does not get doubled!
+    Mz = np.real(np.matmul(Zstates,fmat[Ns:,:]))
+    #print("Mz = %s" % Mz)
 
     #print("Mz is %s " % Mz)
 
@@ -567,7 +568,9 @@ def magphase(x,arr):
    
 
 # Show magnetization for states.
-def epg_showstate(ax,FZ,Nspins,voxvar):
+#
+# voxvar lets you determine (0) all spins start at origin (1) "Twists"
+def epg_showstate(ax,FZ,Nspins=5,voxvar=0):
 
   
   M = epg_FZ2spins(FZ,Nspins);
@@ -576,14 +579,25 @@ def epg_showstate(ax,FZ,Nspins,voxvar):
   mx = M[0:1,:]
   my = M[1:2,:]
   mz = M[2:3,:]
-  z = 2*(np.arange(0,Nspins)+0.5)/Nspins;
+  x = np.zeros((1,Nspins))
+  y = np.zeros((1,Nspins))
+  z = np.zeros((1,Nspins))
 
-  ax.quiver(mx*0, my*0, z, mx,my,mz,normalize=True)
+  if (voxvar==1):
+    z = 2*(np.arange(0,Nspins)+0.5)/Nspins;
+  if (voxvar==2):
+    x = 2*(np.arange(0,Nspins)+0.5)/Nspins;
+
+  ax.quiver(x, y, z, mx,my,mz,normalize=False)
   ax.set(xlim=(-scale,scale),ylim=(-scale,scale),zlim=(-scale,scale))
   return
 
+# Show matrix of EPG states with coefficients
+# 
+#   skipfull = True will not show "full" spins state in row 2, col 1
+#
 
-def epg_show(FZ,Nspins=19):
+def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
 # STARTING to write this!
 # Basic version works... lots to do!
 
@@ -593,18 +607,35 @@ def epg_show(FZ,Nspins=19):
   n = np.shape(FZ)[1]
 
   fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
+  #fig = plt.figure(figsize=(m,n))
+  #!!! Need to make plot bigger!
+
   for mm in range(m):
     for nn in range(n):
       figax = fig.add_subplot(m,n,nn+mm*n+1, projection='3d') 
+      voxvar=1	#Twists
+      if (mm > 1):
+        voxvar=2  # Z states with variation along x
+
       if (nn==0 and mm==1):
-        Q=FZ				   # Show all m in leftmost, 2nd row.
-        epg_showstate(figax,Q,Nspins) 
+        if (skipfull==False):
+          epg_showstate(figax,FZ,Nspins,voxvar=0) # All spins
       else:
         Q = 0*FZ 
         Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
-        epg_showstate(figax,Q,Nspins) 
+        epg_showstate(figax,Q,Nspins,voxvar) 
      
       # Label subplot with F/Z state and value. 
+      # !!! Need to append state values
+      # !!! Need to put titles into Latex so they look good!
+      if (mm ==0):
+        figax.title.set_text('F_{%d}' % nn)	# F+ states
+      if (mm ==1 and nn>0):
+        figax.title.set_text('F_{-%d' % nn)	# F- states
+      if (mm ==1 and nn==0):
+        figax.title.set_text('All Spins')	# All spins combined
+      if (mm ==2):
+        figax.title.set_text('Z_{%d}' % nn)	# Z states
       # Orient them!
 
   return
