@@ -10,12 +10,45 @@
 # Derived from Stanford RAD229 Class (Matlab) functions
 #
 # Created on Tue Nov 19 08:57:48 2019
-# author: Joshua Kaggie, Brian Hargreaves
+# authors: Joshua Kaggie, Brian Hargreaves
 # -----------------------------------------------------
 
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+PLOTON = True
+
+
+from time import sleep
+
+
+
+
+
+def animation_plot():
+    #%matplotlib notebook  ## RUN THIS LINE IF IN JUPYTER
+    import matplotlib.animation
+    t = np.linspace(0,2*np.pi)
+    x = np.sin(t)
+    
+    fig, ax = plt.subplots()
+    ax.axis([0,2*np.pi,-1,1])
+    l, = ax.plot([],[])
+    
+    def animate(i):
+        l.set_data(t[:i], x[:i])
+    
+    ani = matplotlib.animation.FuncAnimation(fig, animate, frames=len(t))
+    
+    from IPython.display import HTML
+    HTML(ani.to_jshtml())
+
+
+
+
+
 
 def relax(t,T1 = 4., T2 = 0.1, combine=True):
     T1 = T1 * 1.
@@ -384,9 +417,7 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     # -- Fourier transform to Mz
     fmatz = fmat[Ns:,:]
     #print("fmatz = %s" % fmatz)
-    Mz = 2.*np.real(np.matmul(Zstates,fmat[Ns:,:]))
-    Mz[2,0] = Mz[2,0]/2.	# Z0 does not get doubled!
-
+    Mz = np.real(np.matmul(Zstates,fmat[Ns:,:]))
     #print("Mz is %s " % Mz)
 
     # -- Extract Mx, My and Mz and return as 3xN.
@@ -394,9 +425,7 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
 
     return spins
 
-
-
-    
+  
     
 
 
@@ -429,7 +458,14 @@ def epg_trim(FpFmZ, thres):
     return FpFmZ
 
 
-def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_rotation = False):
+def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_rotation = False, 
+           frames = 1, ploton = PLOTON):
+    if frames > 1:
+        for xi in range(frames):
+            FpFmZ = epg_rf(FpFmZ, alpha/frames , phi, in_degs, return_rotation=False, frames=1, ploton = False)        
+            epg_show(FpFmZ)
+        return 0
+        
     if in_degs:
         alpha = alpha*np.pi/180.
         phi = phi*np.pi/180.
@@ -567,7 +603,7 @@ def magphase(x,arr):
    
 
 # Show magnetization for states.
-def epg_showstate(ax,FZ,Nspins,voxvar):
+def epg_showstate(ax,FZ,Nspins=19,voxvar=0):
 
   
   M = epg_FZ2spins(FZ,Nspins);
@@ -583,11 +619,13 @@ def epg_showstate(ax,FZ,Nspins,voxvar):
   return
 
 
+#    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import    
+#    fig = plt.figure()
+#    ax = fig.gca(projection='3d')   
+
 def epg_show(FZ,Nspins=19):
 # STARTING to write this!
 # Basic version works... lots to do!
-
-  Nspins=19
 
   m = np.shape(FZ)[0]
   n = np.shape(FZ)[1]
@@ -661,7 +699,9 @@ def plotgradinfo():
 
 
 def setprops():
-    pass
+    import matplotlib.style as style
+    style.use('seaborn') # 'ggplot'
+
 
 def sinc(x):
     return np.sinc(x)
