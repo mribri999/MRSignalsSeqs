@@ -384,7 +384,9 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     # -- Fourier transform to Mz
     fmatz = fmat[Ns:,:]
     #print("fmatz = %s" % fmatz)
-    Mz = np.real(np.matmul(Zstates,fmat[Ns:,:]))
+    Mz = 2.*np.real(np.matmul(Zstates,fmat[Ns:,:]))
+    Mz[2,0] = Mz[2,0]/2.	# Z0 does not get doubled!
+
     #print("Mz is %s " % Mz)
 
     # -- Extract Mx, My and Mz and return as 3xN.
@@ -445,12 +447,6 @@ def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_r
 
     
     
-    Mxy = np.matmul(ph,np.transpose(Fstates))
-    ph = np.exp(1j*2*np.pi*x*np.arange(Ns))
-    FpFmZ[2,0] = FpFmZ[2,0]/2.
-    Mz = 2.*np.real(np.matmul(ph,np.transpose(FpFmZ[2])))
-    M = [np.real(Mxy), np.imag(Mxy), Mz]
-    return M
 
 
 
