@@ -570,8 +570,10 @@ def magphase(x,arr):
     plt.plot(x,phase/np.pi)
    
 
-def epg_showstate(ax,FZ,Nspins):
+# Show magnetization for states.
+def epg_showstate(ax,FZ,Nspins,voxvar):
 
+  
   M = epg_FZ2spins(FZ,Nspins);
   scale = 1.
 
@@ -598,11 +600,17 @@ def epg_show(FZ,Nspins=19):
   for mm in range(m):
     for nn in range(n):
       figax = fig.add_subplot(m,n,nn+mm*n+1, projection='3d') 
-      Q = 0*FZ 
-      Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
-      epg_showstate(figax,Q,Nspins) 
+      if (nn==0 and mm==1):
+        Q=FZ				   # Show all m in leftmost, 2nd row.
+        epg_showstate(figax,Q,Nspins) 
+      else:
+        Q = 0*FZ 
+        Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
+        epg_showstate(figax,Q,Nspins) 
      
       # Label subplot with F/Z state and value. 
+      # Orient them!
+
   return
  
 
