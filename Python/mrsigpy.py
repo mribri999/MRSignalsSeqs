@@ -388,14 +388,50 @@ def epg_gt(FpFmZ, T1, T2, T):
     
 
 
+# Convert from M=[[mx],[my],[mz]] (3xN) to EPG state coefficient matrix 
+def epg_spins2FZ(M = [[0],[0],[1]],trim=0.01):
 
+    #!!! Need to check M has 3 rows
+    N = np.shape(M)[1] 		# Size of M
+    Q= np.int(np.floor(N/2)+1)	# Max Number of columns of FZ
+
+    # -- The following are Eqs. 2-4 from Wiegel 2010:
+    # -- Note you could do ONE FFT for Fp and Fm instead, if
+    # -- speed is an issue.
+    M = np.fft.ifftshift(M,axes=1)	
+    Mxy = M[:1,:]+ 1j*M[1:2,:]		     # Mx+jMy, to be clear
+    #print("Mxy is %s" % Mxy)
+    Fp = np.fft.fft(Mxy,axis=1)/N   	     # FFT to F+ 
+    #Fm = np.fft.fft(np.conj(Mxy),axis=1)/N   # Could do this way...
+    Z  = np.fft.fft(M[2:,:],axis=1)/N        # FFT to F+ states.
+
+    # -- Fm coefficients from right-half of Fp, truncate before fliplr
+    Fmc = np.fliplr(np.conj(np.roll(Fp[:1,:],-1,axis=1)[:1,Q-1:]))
+    #print("Fp is %s" % Fp)
+    #print("Fmc is %s" % Fmc)
+    #print("Fm is %s" % Fm)
+
+    # !!! Could define Fmm from right half of Fp to check
+
+    FpFmZ = np.concatenate((Fp[:,:Q],Fmc,Z[:,:Q]),axis=0)  # Combine to 3xQ 
+    #print("FpFmZ is %s" % FpFmZ)
+     
+    FpFmZ = epg_trim(FpFmZ,trim)            # Trim near-zero states.
+    return FpFmZ
+
+
+
+
+# Convert from EPG state coefficient matrix to M=[[mx],[my],[mz]] (3xN)
 def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
 
     Ns = np.shape(FpFmZ)[1]-1
     if N is None: N = 2.*Ns-1
 
-    # -- Make Fourier matrix - there *must* be a faster way!
-    z = (np.arange(N).astype(np.float)+0.5)/N-0.5   # z = fraction across voxel
+    # -- Make Fourier matrix - there may be a cleaner way!
+    # -- positions effectively give fftshift after transform.
+    z = (np.arange(0,N)-np.floor(N/2))/N
+    #z = (np.arange(N).astype(np.float)+0.5)/N-0.5   # z = fraction across voxel
     z = np.expand_dims(z, axis=0)
     phz = (1j*2.*np.pi*z)                   # 2pi*i*z) 
     inds = np.arange(-(Ns),(Ns+1))+frac	    # State number n=[-Ns:Ns]
@@ -451,11 +487,11 @@ def epg_mgrad(*kw, **kws):
     return epg_grad(positive = False, *kw, **kws)    
 
 
+# Discard states higher than highest with a coefficient greater than thres
 def epg_trim(FpFmZ, thres):
-    #f = np.where(np.sum(np.abs(FpFmZ),axis=0)>= thres)
-    #fn = np.max(f)
-    fn = np.argmax(np.sum(np.abs(FpFmZ),axis=0)>= thres)  ## same type of code, different method
-    FpFmZ = FpFmZ[:,:fn+1]
+   
+    a = np.max(np.argwhere(np.abs(FpFmZ)>thres),axis=0)[1]
+    FpFmZ = FpFmZ[:,:a+1]
     return FpFmZ
 
 
@@ -608,8 +644,8 @@ def magphase(x,arr):
 # voxvar lets you determine (0) all spins start at origin (1) "Twists"
 def epg_showstate(ax,FZ,Nspins=19,voxvar=0):
 
-  
-  M = epg_FZ2spins(FZ,Nspins);
+   
+  M = epg_FZ2spins(FZ,Nspins)
   scale = 1.
 
   mx = M[0:1,:]
@@ -620,9 +656,10 @@ def epg_showstate(ax,FZ,Nspins=19,voxvar=0):
   z = np.zeros((1,Nspins))
 
   if (voxvar==1):
-    z = 2*(np.arange(0,Nspins)-np.float(Nspins)/2.+0.5)/Nspins;
+    z = 2*(np.arange(0,Nspins)-np.floor(Nspins/2))/Nspins  #2x fills axis!
   if (voxvar==2):
-    x = 2*(np.arange(0,Nspins)-np.float(Nspins)/2.+0.5)/Nspins;
+    x = 2*(np.arange(0,Nspins)-np.floor(Nspins/2))/Nspins
+    #x = 2*(np.arange(0,Nspins)-np.float(Nspins)/2.+0.5)/Nspins
 
   ax.quiver(x, y, z, mx,my,mz,normalize=False)
   ax.set(xlim=(-scale,scale),ylim=(-scale,scale),zlim=(-scale,scale))
