@@ -409,7 +409,7 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     # -- Get last row (Z states) 
     Zstates = 2.*FpFmZ[2:,:]		# Double to account for one-sided FT.
     Zstates[0,0]=Zstates[0,0]/2		# Don't double Z0
-    print("Z states (doubled for n>0) = %s" % Zstates)
+    #print("Z states (doubled for n>0) = %s" % Zstates)
     
     # -- Fourier transform to Mxy
     Mxy = np.matmul(Fstates,fmat)
@@ -620,19 +620,30 @@ def epg_showstate(ax,FZ,Nspins=19,voxvar=0):
   z = np.zeros((1,Nspins))
 
   if (voxvar==1):
-    z = 2*(np.arange(0,Nspins)+0.5)/Nspins;
+    z = 2*(np.arange(0,Nspins)-np.float(Nspins)/2.+0.5)/Nspins;
   if (voxvar==2):
-    x = 2*(np.arange(0,Nspins)+0.5)/Nspins;
+    x = 2*(np.arange(0,Nspins)-np.float(Nspins)/2.+0.5)/Nspins;
 
   ax.quiver(x, y, z, mx,my,mz,normalize=False)
   ax.set(xlim=(-scale,scale),ylim=(-scale,scale),zlim=(-scale,scale))
+
+
+  # -- Turn off grid axis with numbering, and add lines 
+  axlims = np.array([-1,1])
+  ax.plot(axlims,0*axlims,0*axlims,'k-')	# x axis
+  ax.plot(0*axlims,axlims,0*axlims,'k-')	# y axis
+  ax.plot(0*axlims,0*axlims,axlims,'k-')	# z axis
+  ax.set_axis_off()
   return
+
+
+
+
 
 # Show matrix of EPG states with coefficients
 # 
 #   skipfull = True will not show "full" spins state in row 2, col 1
 #
-
 def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
 #    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import    
 #    fig = plt.figure()
@@ -644,8 +655,8 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
   m = np.shape(FZ)[0]
   n = np.shape(FZ)[1]
 
-  fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
-  #fig = plt.figure(figsize=(m,n))
+  #fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
+  fig = plt.figure(figsize=(3*n,3*m))	# Note (width,height)
   #!!! Need to make plot bigger!
 
   for mm in range(m):
@@ -655,13 +666,18 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
       if (mm > 1):
         voxvar=2  # Z states with variation along x
 
-      if (nn==0 and mm==1):
+      if (nn==0 and mm==1):			# Plot of all states/spins
         if (skipfull==False):
           epg_showstate(figax,FZ,Nspins,voxvar=0) # All spins
+          figax.title.set_text('All Spins')	# All spins combined
+        else:
+          figax.set_axis_off()
+
       else:
         Q = 0*FZ 
         Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
         epg_showstate(figax,Q,Nspins,voxvar) 
+
      
       # Label subplot with F/Z state and value. 
       # !!! Need to append state values
@@ -670,8 +686,6 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
         figax.title.set_text('F_{%d}' % nn)	# F+ states
       if (mm ==1 and nn>0):
         figax.title.set_text('F_{-%d' % nn)	# F- states
-      if (mm ==1 and nn==0):
-        figax.title.set_text('All Spins')	# All spins combined
       if (mm ==2):
         figax.title.set_text('Z_{%d}' % nn)	# Z states
       # Orient them!
