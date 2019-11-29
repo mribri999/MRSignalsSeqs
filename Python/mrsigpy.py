@@ -809,15 +809,207 @@ def throt(theta = 0., phi=0., in_degs = True):
 
 
 
-def vds():
-    pass
 
-def vecdcf():
-    pass
+def whirl(N,res,fov, tsample = 0.000004,
+          upsamp = 16, gmax = 3.9, smax = 14500,
+          gamma = 4258):
+    
+    dT = tsample/upsamp
+    kmax = 0.5/res
+    delta = N/2./np.pi/fov
+    r1 = 1./np.sqrt(5)*delta
+    r2 = 3./np.sqrt(5)*delta
+    
+    
+    Gc= np.sqrt(2*smax*r1/gamma)
+    g = np.arange(0,Gc, smax*dT)
+    k = np.cumsum(g)*gamma*dT
+    ng = len(g)
+    ng1 = ng*1  # multiply by one to create a new instance because python is funny
+    
+    G = g[-1]
+    r = k[-1]
+    kk = k[-1]
+    phi = 0
+    
+    # pre allocate space?
+    maxng = 10000*upsamp
+    if maxng > len(g):
+        g = np.pad(g, maxng-len(g), 'constant').astype(np.complex)
+        k = np.pad(k, maxng-len(k), 'constant').astype(np.complex)
+    Grec = np.array(g)
+    Grec[10000] = 0
+    phirec = 0*Grec
+    
+    done = False
+    dphi = smax/np.abs(G)*dT
+    
+    while r<r2:
+        ng = ng+1
+        phi = phi+dphi
+        g[ng] = G*np.exp(1j*phi)
+        kk = kk+g[ng]*dT*gamma
+        k[ng] = kk
+        r = np.abs(kk)
+    
+    ng2 = ng*1  # multiply by one to create a new instance because python is funny
+    
+    dG = 0
+    
+    
+    
+    while r<kmax and ng<maxng:
+        Gapp = G
+        r = np.abs(k[ng]+gamma*g[ng]*dT/2)
+        ng = ng+1
+        
+        dphi = gamma*Gapp/np.sqrt(r**2-delta**2)*dT
+        dG = np.sqrt(smax - (Gapp*dphi/dT)**2)*dT
+        
+        G = G+dG
+        if G>= gmax:
+            G = gmax
+            dG = 0
+            
+        phi = phi+dphi
+        g[ng] = G*np.exp(1j*phi)
+        
+        kk = kk+g[ng]*dT*gamma
+        k[ng] = kk
+        r = np.abs(kk)
+        
+        if ng>= maxng:
+            print('max points', maxng)
+            
+            
+    k = k[:ng:upsamp]
+    g = g[:ng:upsamp]
+    
+    g1 = g[:np.round(ng1/upsamp)]
+    g2 = g[np.round(ng1/upsamp):np.round(ng2/upsamp)]
+    g3 = g[np.round(ng2/upsamp)+1:len(g)]
+    
+    return g, g1, g2, g3
+        
+        
 
-def whirl():
-    pass
+def vds(smax, gmax, T, N, Fcoeff, rmax, z=0,
+        gamma = 4258, oversamp = 8):
+    
+    To = T*1./oversamp
+    
+    q0 = 0.
+    q1 = 0.
+    
+    Nprepare = 10000
+    theta = np.zeros(Nprepare)
+    r = np.zeros(Nprepare)
+    
+    r0 = 0
+    r1 = 1
+    
+    time = np.zeros(Nprepare)
+    t = 0
+    count = 1
+    
+    theta = np.zeros(Nprepare)
+    r = np.zeros(Nprepare)
+    time = np.zeros(Nprepare)
+        
+    while r < rmax:
+        print('Error findq2r2 does not exist')
+        
+        q1 = q1+q2*To
+        q0 = q0 + q1*To
+        t = t+To
+        r1 = r1+r2*To
+        r0 = r0 + r1*To
+        
+        count = count+1
+        theta[count] = q0
+        r[count] = r0
+        time[count] = t
+        
+        if np.remainder(count,100) == 0:
+            print('points')
+    r = r[oversamp/2:count:oversamp]
+    theta = theta[oversamp/2:count:oversamp]
+    time = time[oversamp/2:count:oversamp]
+    
+    ltheta = 4*np.floor(len(theta)/4)
+    r = r[:ltheta]
+    theta = theta[:ltheta]
+    time = time[:ltheta]
+    
+    r = r*np.exp(1j*theta)
+    g = 1./gamma*(np.gradient(g))/T
+    
+    s = np.gradient(g)
+    
 
+def qdf(a,b,c):
+    return np.roots([a,b,c])
+
+
+def findq2r2(smax, gmax, r, r1, T, Ts, N, Fcoeff, rmax, z):
+    gamma = 4258.
+    smax = smax + z*gmax
+    F= 0.
+    dFdr = 0
+    for rind in np.arange(Fcoeff):
+        F = F+Fcoeff[rind]*(r/rmax)**(rind-1)
+        if rind>1:
+            dFdr = dFdr + (rind-1)*Fcoeff[rind]*(r/rmax)**(rind-2)/rmax
+            
+    GmaxFOV = 1./gamma/F/Ts
+    Gmax = np.min([GmaxFOV, gmax])
+    maxr1 = np.sqrt((gamma*Gmax)**2)/(1+(2*p.pi*F*r/N)**2)
+
+    if r1>maxr1:
+        r2 = (maxr1-r1)/T
+        
+        twopiFoN = 2*np.pi*F/N
+        twopiFoN2 = twopiFoN**2
+        
+        A = 1+ twopiFoN2*r*r
+        
+        B = 2*twopiFoN2*r*r1*r1 + 2*twopiFoN2/F*dFdr*r*r*r1*r1 + 2*z*r1 + 2*twopiFoN2*r1*r
+        C1 = twopiFoN2**2*r*r*r1**4 + 4*twopiFoN2*r1**4 + (2*pi/N*dFdr)**2*r*r*r1**4 + 4*twopiFoN2/F*dFdr*r*r1**4 - (gamma)**2*smax**2
+        C2 = z*(z*r1**2 + z*twopiFoN2*r1**2 + 2*twopiFoN2*r1**3*r + 2*twopiFoN2/F*dFdr*r1**3*r)
+        C = C1+C2;
+
+        theroots = np.roots((A,B,C))
+        r2 = np.real(theroots[0])
+        
+        slew = 1./gamma*(r2*twopiFoN2*r*r1**2+1j*twopiFoN*(2*r1**2+r*r2+dFdr/F*r*r1**2))
+        sr = np.abs(slew)/smax
+        
+        if np.abs(slew)/smax > 1.01:
+            print('slew',slew)
+            
+    q2 = 2*np.pi/N*dFdr*r1**2+2*np.pi/F/N*r2
+    
+    return q2, r2
+
+
+def vecdcf(g,k = None,N = None,res = None,FOV = None):
+    if np.shape(g)[1]==2:
+        g = g[:,0]+1j*g[:,1]
+        
+    if k is None:
+        k = np.minimum.accumulate(g, 0.5)  # this isn't equivalent.  hmm
+        k = k * 0.5/ np.max(np.abs(k))  # watch dimension collapse      
+        
+    Nsamps = len(k)
+    
+    g3 = np.array([np.real(g), np.imag(g), 0*np.real(g)])
+    k3 = np.array([np.real(k), np.imag(k), 0*np.real(k)])
+    
+    dcf = 0*k
+    
+    for m in np.arange(Nsamps):
+        dcf[m] = np.linalg.norm()
+    # I'm afraid I have to stop for the moment.  Pull!
 
 
 
