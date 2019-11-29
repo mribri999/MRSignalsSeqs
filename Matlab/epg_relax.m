@@ -1,4 +1,4 @@
-%function [FpFmZ,EE] = epg_gt(FpFmZ,T1,T2,T)
+%function [FpFmZ,EE] = epg_relax(FpFmZ,T1,T2,T)
 % 
 %	Propagate EPG states through a period of relaxation over
 %	an interval T.
