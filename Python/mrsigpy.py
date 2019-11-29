@@ -373,7 +373,7 @@ def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, e
 
 
 
-def epg_gt(FpFmZ, T1, T2, T):
+def epg_relax(FpFmZ, T1, T2, T):
     if (T1 < 0) or T2<0 or T<0:
         print('Your values should not be negative...  Are you a time-traveller?')
     E2 = np.exp(-T/1./T2)
@@ -691,6 +691,7 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
 
   m = np.shape(FZ)[0]
   n = np.shape(FZ)[1]
+  slabel = ('F_{','F_{-','Z_{')
 
   #fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
   fig = plt.figure(figsize=(3*n,3*m))	# Note (width,height)
@@ -714,18 +715,16 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
         Q = 0*FZ 
         Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
         epg_showstate(figax,Q,Nspins,voxvar) 
+        # -- Label state
+        stateval = "%s%d} = %4g +%4gj" % (slabel[mm], \
+		nn,np.real(FZ[mm,nn]),np.imag(FZ[mm,nn]))
+        figax.title.set_text(stateval)		# F+ states
+        #!!!  Would be great to make subscript in titles but 
+	#     Jupyter doesn't seem to handle that.
 
-     
-      # Label subplot with F/Z state and value. 
-      # !!! Need to append state values
-      # !!! Need to put titles into Latex so they look good!
-      if (mm ==0):
-        figax.title.set_text('F_{%d}' % nn)	# F+ states
-      if (mm ==1 and nn>0):
-        figax.title.set_text('F_{-%d' % nn)	# F- states
-      if (mm ==2):
-        figax.title.set_text('Z_{%d}' % nn)	# Z states
-      # Orient them!
+      # !!! Orient plots!  Could make F states from above so you just
+      #     see the circle.  Once they are in color, this could be a good
+      #     option.
 
   return
  
