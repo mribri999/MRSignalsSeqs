@@ -639,11 +639,23 @@ def magphase(x,arr):
     plt.plot(x,phase/np.pi)
    
 
-# Show magnetization for states.
+# epg_showstate(ax,FZ,frac=0,Nspins=19,voxvar=0):
 #
-# voxvar lets you determine (0) all spins start at origin (1) "Twists"
-def epg_showstate(ax,FZ,Nspins=19,voxvar=0):
-
+# Plots a set of vectors on a single axis, from EPG coefficients.
+#
+# INPUTS:
+#	ax = plot figure/axis upon which to plot
+#	FZ = EPG coefficient matrix to display
+#	frac = Additional dephasing.  Essentially adds to n for F_n 
+#              states to show the dephasing/rephasing during gradient.
+#	Nspins = Number of spins to use in graphical displays
+#	voxvar = 1 to vary origin of vectors along z, 2 along x and
+#		 0 all from (0,0,0).  Often use 1 for F_n and 2 for Z_n.
+#
+# OUTPUT:
+#	M = corresponding magnetization endpoints ([[Mx],[My],[Mz]])
+	
+def epg_showstate(ax,FZ,frac=0,Nspins=19,voxvar=0):
    
   M = epg_FZ2spins(FZ,Nspins)
   scale = 1.
@@ -671,17 +683,30 @@ def epg_showstate(ax,FZ,Nspins=19,voxvar=0):
   ax.plot(0*axlims,axlims,0*axlims,'k-')	# y axis
   ax.plot(0*axlims,0*axlims,axlims,'k-')	# z axis
   ax.set_axis_off()
-  return
+
+  return M
 
 
 
-
-
-# Show matrix of EPG states with coefficients
-# 
-#   skipfull = True will not show "full" spins state in row 2, col 1
+# epg_show()
+# Uses subplots to graphically show EPG decomposition of magnetisation.
+# Subplots are rows for F+, F- and Z coefficients.  In most epg_ functions
+# a matrix of the same size, "FZ" or "FpFmZ" is used to store the 
+# coefficients.
 #
-def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
+# INPUTS:
+#	FZ = EPG coefficient matrix to display
+#	Nspins = Number of spins to use in graphical displays
+#	frac = Additional dephasing.  Essentially adds to n for F_n 
+#              states to show the dephasing/rephasing during gradient.
+#       skipfull = True will not show "full" spins state in row 2, col 1
+#	twists   = True to show as "twists" and "cosines" for F/Z vs
+#		   False to have all vectors start at (0,0,0).
+# OUTPUT:
+#	none (plot is updated)
+#
+
+def epg_show(FZ,Nspins=19,frac=0,skipfull=False,twists=True):
 #    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import    
 #    fig = plt.figure()
 #    ax = fig.gca(projection='3d')   
@@ -695,26 +720,30 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False):
 
   #fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
   fig = plt.figure(figsize=(3*n,3*m))	# Note (width,height)
-  #!!! Need to make plot bigger!
 
+  # -- Go through FZ Matrix
   for mm in range(m):
     for nn in range(n):
       figax = fig.add_subplot(m,n,nn+mm*n+1, projection='3d') 
-      voxvar=1	#Twists
-      if (mm > 1):
-        voxvar=2  # Z states with variation along x
+      voxelvar=0	# -- Initialize - all M vectors start at (0,0,0)
+      if (twists==True):
+        voxelvar=1	# -- Twists for F by default
+        if (mm > 1):
+          voxelvar=2    # -- Z states with variation along x
 
-      if (nn==0 and mm==1):			# Plot of all states/spins
+      
+      if (nn==0 and mm==1):	# -- Plot of all states/spins
         if (skipfull==False):
-          epg_showstate(figax,FZ,Nspins,voxvar=0) # All spins
+          epg_showstate(figax,FZ,frac=frac,Nspins=Nspins,voxvar=0) # All spins
           figax.title.set_text('All Spins')	# All spins combined
         else:
           figax.set_axis_off()
 
-      else:
+      else:			# -- Plot single state.
         Q = 0*FZ 
-        Q[mm,nn]=FZ[mm,nn]                 # Just 1 basis at a time
-        epg_showstate(figax,Q,Nspins,voxvar) 
+        Q[mm,nn]=FZ[mm,nn]      # -- Just 1 non-zero basis at a time
+        epg_showstate(figax,Q,frac=frac,Nspins=Nspins,voxvar=voxelvar) 
+
         # -- Label state
         stateval = "%s%d} = %4g +%4gj" % (slabel[mm], \
 		nn,np.real(FZ[mm,nn]),np.imag(FZ[mm,nn]))
