@@ -543,9 +543,53 @@ def ft(dat):
 def gaussian(x,mn,sig):
     return np.exp(-(x-mn)**2/(2*sig**2))/np.sqrt(2*np.pi)/sig
 
-def ghist(data,gmean = None,gsig = None,bins = None,
-          gtitle = 'Data and Gaussian'):
-    N  = len(data)
+#       Function makes is histogram of a signal, and superimposes
+#       a gaussian fit.
+#
+#       INPUT:
+#               data = signal to make histogram for.
+#               gmean = estimate for gaussian fit, mean [default=mean(data)]
+#               gsig = estimate for gaussian fit, sigma [default=std(data)]
+#               nbins = number of bins
+#               gtitle = plot title
+#               gleg1 = legend top line (describe data)
+#               gleg2 = legend second line (describe gaussian)
+#
+def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussian Fit',gleg1='Data',gleg2='Gaussian Fit'):
+
+  if (gmean==None):
+    gmean = np.mean(data)
+  if (gsig==None):
+    gsig = np.std(data)
+  if (np.size(bins) == 2):
+    bins = np.linspace(bins[0],bins[1],100)
+  if (np.size(bins) < 2):
+    nbins = bins		# Passed number of bins
+    bins = np.linspace(gmean-3*gsig,gmean+3*gsig,nbins)
+
+  (hist,binp) = np.histogram(data,bins,(np.min(bins),np.max(bins)))
+  binp = (binp[:-1]+binp[1:])/2.0
+  gfit = gaussian(binp,gmean,gsig) 	 	# Gaussian fit
+  gscale = np.size(data)*(binp[1]-binp[0]);	# Scale
+  
+  # -- Debugging! 
+  #print("Data: %s" % data)
+  #print("Bins: %s" % bins)
+  #print("Hist: " , hist)
+  #sd = np.shape(data)
+  #sb = np.shape(bins)
+  #sh = np.shape(hist)
+  #print('Data shape,',sd)
+  #print('Bins shape,',sb)
+  #print('Hist shape,',sh)
+
+  plt.plot(binp,hist,label=gleg1)
+  plt.plot(binp,gfit*gscale,label=gleg2)
+  plt.legend()
+  lplot('value','frequency',gtitle)
+
+  return hist
+
 
 def gridmat():
     pass
