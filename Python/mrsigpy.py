@@ -590,6 +590,59 @@ def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussia
 
   return hist
 
+# RMS coil noise simulation
+#
+# Simulate the signal plus Gaussian noise, with RMS combination for
+# multiple coils (or just one!) 
+#
+# INPUT:
+#	sig = signal (Ns x 1)
+#       cov = coil covariance matrix (Nc x Nc)
+#	csens = coil sensitivites (Ns x Nc, or 1 x Nc if uniform)
+#
+# RETURNS:
+#       sigdist = signal distribution with noise
+#	bias (mean signal difference) and standard deviation
+#
+def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=3):
+
+  if (sig==None):			# If no sig, make a ramp
+    sig = np.arange(0.0,10.0,0.1)	
+  if (cov==None):			# No coil covariance specified, use Nc
+    cov = np.eye(Nc)
+  else:
+    Nc = np.max(np.shape(cov))	# Otherwise set Nc based on cov
+
+  if (csens==None):		# Default coil sensitivities to all 1
+    csens = np.ones((1,Nc))
+  if (len(csens)!=Nc):
+    print("Coil Sensitivity Matrix should be consistent with Nc or cov")
+
+  if (sig==None):
+    sig = np.arange(0.0,10.0,0.1)  # -- Default Signal from 0 to 10
+
+# -- Generate gaussian noise,
+# !!! should use multivariate here.
+
+  cnoise = np.random.normal(0.0,1.0,(1,Nc,Nn)) + 1j*np.random.normal(0.0,1.0,(1,Nc,Nn))  # Complex gaussian noise sig=1
+  sig = np.expand_dims(sig,axis=1)
+
+  # -- One Coil Active
+  csig = np.matmul(sig,csens)  # -- Coil signals, Spread by sensitivities
+  csig = np.expand_dims(csig,axis=2)    # -- Add dimension for noise samples
+  cnsig = csig+cnoise          # -- Generate complex signal distributions (broadcast)
+  # !!! noise is same at each sig location - not okay later!!!
+
+  rmssens = np.sqrt(np.sum(csens * np.conj(csens))) # -- Normalize by RMS csens
+  #print('RMS sensitivity ',rmssens)
+  rmssig = np.sqrt(np.sum(cnsig * np.conj(cnsig),axis=1))/rmssens   
+
+  # -- Calculate signal standard deviation, bias 
+  sigstd = np.std(rmssig,axis=1)
+  sigbias = np.squeeze(np.mean(rmssig,axis=1)) - np.squeeze(sig)
+
+  return (rmssig,sigbias,sigstd)
+
 
 def gridmat():
     pass
@@ -880,11 +933,9 @@ def throt(theta = 0., phi=0., in_degs = True):
     return M        
 
 
-
-
 def whirl(N,res,fov, tsample = 0.000004,
-          upsamp = 16, gmax = 3.9, smax = 14500,
-          gamma = 4258):
+          upsamp = 16, gmax = 3.9, smax = 14500, gamma = 4258):
+     
     
     dT = tsample/upsamp
     kmax = 0.5/res
