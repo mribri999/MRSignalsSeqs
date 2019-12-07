@@ -245,7 +245,8 @@ def calcgradinfo(g,T=0.000004,k0=0,R=0.35,L=0.0014,eta=1/56, gamma = 4258):
     return k,g,s,m1,m2,t,v
 
 
-
+# Use np.multivariate ???
+# !!!!
 _default_R = [np.arange(0.2,1,.2),np.arange(0.1,0.8,.2),np.arange(-0.2,0.6,.2)]
 def corrnoise(mn=None,R=_default_R,n=100):
     if mn is None:
@@ -555,7 +556,7 @@ def gaussian(x,mn,sig):
 #               gleg1 = legend top line (describe data)
 #               gleg2 = legend second line (describe gaussian)
 #
-def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussian Fit',gleg1='Data',gleg2='Gaussian Fit'):
+def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussian Fit',gleg1='Data',gleg2='Gaussian'):
 
   if (gmean==None):
     gmean = np.mean(data)
@@ -571,7 +572,9 @@ def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussia
   binp = (binp[:-1]+binp[1:])/2.0
   gfit = gaussian(binp,gmean,gsig) 	 	# Gaussian fit
   gscale = np.size(data)*(binp[1]-binp[0]);	# Scale
-  
+ 
+  gleg2 = gleg2 + " mn: %4g, sd: %4g" % (gmean,gsig)
+
   # -- Debugging! 
   #print("Data: %s" % data)
   #print("Bins: %s" % bins)
@@ -599,35 +602,54 @@ def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussia
 #	sig = signal (Ns x 1)
 #       cov = coil covariance matrix (Nc x Nc)
 #	csens = coil sensitivites (Ns x Nc, or 1 x Nc if uniform)
+#       Nc = number of coils (used if cov AND csens not passed
+#	plotfig = figure object - if given, plots bias and stdev vs signal.
+#	plottitle = title for plot (optional)
 #
 # RETURNS:
 #       sigdist = signal distribution with noise
 #	bias (mean signal difference) and standard deviation
 #
-def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=3):
+def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,plotfig=None,plottitle=None):
 
-  if (sig==None):			# If no sig, make a ramp
+  if (len(sig)<2 and sig==None):   # -- If no sig, make a ramp
     sig = np.arange(0.0,10.0,0.1)	
-  if (cov==None):			# No coil covariance specified, use Nc
+
+
+  # -- Define csens,cov and Nc
+  #    --Tricky, as user can pass any one of them!
+  if (csens is None and cov is None):	# Define from Nc
+    csens = np.ones((1,Nc))
+  else:
+    if (csens is None):
+      Nc = np.shape(cov)[0]		# Assume cov is square!
+    else:
+      print("csens is ",csens)
+      Nc = np.shape(csens)[1]
+
+  if (cov is None):			# No coil covariance specified, use Nc
     cov = np.eye(Nc)
   else:
     Nc = np.max(np.shape(cov))	# Otherwise set Nc based on cov
 
-  if (csens==None):		# Default coil sensitivities to all 1
+  if (csens is None):		# -- Default coil sensitivities to all 1
     csens = np.ones((1,Nc))
-  if (len(csens)!=Nc):
-    print("Coil Sensitivity Matrix should be consistent with Nc or cov")
 
-  if (sig==None):
-    sig = np.arange(0.0,10.0,0.1)  # -- Default Signal from 0 to 10
+
+
+  if (np.shape(csens)[1]!=Nc):
+    print("Coil Sensitivity Matrix should be consistent with Nc or cov")
+    print("csens is ",np.shape(csens))
+    print("Number of coils is ",Nc)
+    print("Covariance is ",np.shape(cov))
 
 # -- Generate gaussian noise,
 # !!! should use multivariate here.
 
   cnoise = np.random.normal(0.0,1.0,(1,Nc,Nn)) + 1j*np.random.normal(0.0,1.0,(1,Nc,Nn))  # Complex gaussian noise sig=1
-  sig = np.expand_dims(sig,axis=1)
-
-  # -- One Coil Active
+  #sig = np.expand_dims(sig,axis=1)
+  sz = np.shape(sig)
+  print("shape of sig is " , sz)
   csig = np.matmul(sig,csens)  # -- Coil signals, Spread by sensitivities
   csig = np.expand_dims(csig,axis=2)    # -- Add dimension for noise samples
   cnsig = csig+cnoise          # -- Generate complex signal distributions (broadcast)
@@ -641,6 +663,14 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=3):
   sigstd = np.std(rmssig,axis=1)
   sigbias = np.squeeze(np.mean(rmssig,axis=1)) - np.squeeze(sig)
 
+  if (plotfig is not None):
+    plotfig.plot(sig,sigbias,'b--',label='Bias')
+    plotfig.plot(sig,sigstd,'r-',label='Std Dev')
+    if (plottitle is None):
+      plottitle = "Bias/Std.Dev"
+    lplot('Signal','Bias, Std.Dev',plottitle)	# lplot labels plot.
+    plotfig.legend()
+ 
   return (rmssig,sigbias,sigstd)
 
 
