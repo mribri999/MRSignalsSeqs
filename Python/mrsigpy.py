@@ -610,7 +610,12 @@ def ghist(data,gmean = None,gsig = None,bins = 100,gtitle='Histogram and Gaussia
 #       sigdist = signal distribution with noise
 #	bias (mean signal difference) and standard deviation
 #
-def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,plotfig=None,plottitle=None):
+# EXAMPLES:
+#  	rmssig = mrs.rmscoilnoise(Nc=1)  [Simple Rayleigh/Rician noise]
+#       rmssig = mrs.rmscoilnoise(csens=np.array([[1,1,1]]))  [3 coils]
+#       rmssig = mrs.rmscoilnoise(cov=np.eye(3))  [3 coils, again!]
+
+def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,scale=None,plotfig=None,plottitle=None):
 
   if (len(sig)<2 and sig==None):   # -- If no sig, make a ramp
     sig = np.arange(0.0,10.0,0.1)	
@@ -624,7 +629,6 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,plotfig=None,plottit
     if (csens is None):
       Nc = np.shape(cov)[0]		# Assume cov is square!
     else:
-      print("csens is ",csens)
       Nc = np.shape(csens)[1]
 
   if (cov is None):			# No coil covariance specified, use Nc
@@ -636,9 +640,8 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,plotfig=None,plottit
     csens = np.ones((1,Nc))
 
 
-
   if (np.shape(csens)[1]!=Nc):
-    print("Coil Sensitivity Matrix should be consistent with Nc or cov")
+    print("Coil Sensitivity Matrix should be consistent with Nc and/or cov")
     print("csens is ",np.shape(csens))
     print("Number of coils is ",Nc)
     print("Covariance is ",np.shape(cov))
@@ -646,22 +649,35 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,plotfig=None,plottit
 # -- Generate gaussian noise,
 # !!! should use multivariate here.
 
-  cnoise = np.random.normal(0.0,1.0,(1,Nc,Nn)) + 1j*np.random.normal(0.0,1.0,(1,Nc,Nn))  # Complex gaussian noise sig=1
-  #sig = np.expand_dims(sig,axis=1)
+  cnoise = np.random.multivariate_normal(np.zeros(Nc),cov,(1,Nn)) + 1j*np.random.multivariate_normal(np.zeros(Nc),cov,(1,Nn))
+  cnoise = np.moveaxis(cnoise,(0,1,2),(0,2,1))
+  #cnoise = np.random.normal(0.0,1.0,(1,Nc,Nn)) + 1j*np.random.normal(0.0,1.0,(1,Nc,Nn))  # Complex gaussian noise sig=1
+
+  #print("cnoise shape is ",np.shape(cnoise))
+  #print("cnoise (pt 1) is ", np.squeeze(cnoise[0,:,0]))
+
   sz = np.shape(sig)
-  print("shape of sig is " , sz)
   csig = np.matmul(sig,csens)  # -- Coil signals, Spread by sensitivities
   csig = np.expand_dims(csig,axis=2)    # -- Add dimension for noise samples
   cnsig = csig+cnoise          # -- Generate complex signal distributions (broadcast)
+  #print("sig+cnoise (pt 1) is ", np.squeeze(cnsig[0,:,0]))
   # !!! noise is same at each sig location - not okay later!!!
-
-  rmssens = np.sqrt(np.sum(csens * np.conj(csens))) # -- Normalize by RMS csens
-  #print('RMS sensitivity ',rmssens)
+  
+  # -- Normalize by RMS of sensitivity.  This is done to measure the 
+  # -- signal bias (otherwise the signal scales oddly.  Here the noise should
+  # -- be higher with more coils.
+  rmssens = np.sqrt(np.sum(csens * np.conj(csens))) 
   rmssig = np.sqrt(np.sum(cnsig * np.conj(cnsig),axis=1))/rmssens   
+  #print("RMS sensitivity is ",rmssens)
+  #print("RMS Signal Shape ",np.shape(rmssig))
+ 
+  # -- Normalize by sqrt(Ncoils) - more common for actual recon!
+  #rmssig = np.sqrt(np.sum(cnsig * np.conj(cnsig),axis=1)/Nc)   
 
   # -- Calculate signal standard deviation, bias 
   sigstd = np.std(rmssig,axis=1)
   sigbias = np.squeeze(np.mean(rmssig,axis=1)) - np.squeeze(sig)
+  #print("Signal std Shape ",np.shape(sigstd))
 
   if (plotfig is not None):
     plotfig.plot(sig,sigbias,'b--',label='Bias')
@@ -672,6 +688,16 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,plotfig=None,plottit
     plotfig.legend()
  
   return (rmssig,sigbias,sigstd)
+
+# Calculate the SENSE combination weights for coils
+#
+# INPUT:
+#	coilsens = Nc x R array
+#  	noisecov = Noise covariance matrix (Nc x Nc), defaults to Identity
+#
+
+def senseweights(coilsens=None,noisecov=None):
+    pass
 
 
 def gridmat():
@@ -742,7 +768,8 @@ def lfphase(m,n = None,w = 4):
     ph = np.exp(1j*ang)
     return ph
 
-def lplot(xlab = None,ylab = None,tit = None,ax = None,grid = None):
+# Label plot with x,y axis labels, and title.  Turn on grid by default
+def lplot(xlab = None,ylab = None,tit = None,ax = None,gridon = True):
     if xlab is not None:
         xlabel(xlab)
     if ylab is not None:
@@ -751,7 +778,8 @@ def lplot(xlab = None,ylab = None,tit = None,ax = None,grid = None):
         title(tit)
     if ax is not None:
         plt.axis(ax)
-                
+    plt.grid(gridon)
+
                                 
 
 def lsfatwater():
