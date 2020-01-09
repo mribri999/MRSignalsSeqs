@@ -750,21 +750,21 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
     # -- Pruessmann et al. Eq. 23
     if gfactorcalc is True:
       for g in range(0,R):	
-        gfactor[g] = np.sqrt( ChPsiICI[g,g] * ChPsiIC[g,g] )
-        if (i < 2):
+        gfactor[g] = np.sqrt( np.real(ChPsiICI[g,g] * ChPsiIC[g,g] ))
+   
+        if (False):  #-- Printout for debuggin
           print("  g-factor term 1 is ",np.sqrt(ChPsiICI[g,g]))
           print("  g-factor term 2 is ",np.sqrt(ChPsiIC[g,g]))
           print("Overall gfactor is ",gfactor[g]);
-      #print("gfactor is ",gfactor)
       gfactorout[i,:] = gfactor
 
     if noisecalc is True:
-      ncalc = np.sqrt( np.diag(ChPsiICI) )
+      ncalc = np.sqrt( np.real(np.diag(ChPsiICI) ))
       ncalcout[i,:] = ncalc
 
 
  
-    if (i < 2):
+    if (False):		# -- Print for debugging
       print("For pixel %d:" % i)
       print("SENSE weight matrix is ",sensemat)
       print("g-factor is ",gfactor)
