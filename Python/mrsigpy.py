@@ -544,7 +544,7 @@ def ft(dat):
 def gaussian(x,mn,sig):
     return np.exp(-(x-mn)**2/(2*sig**2))/np.sqrt(2*np.pi)/sig
 
-#       Function makes is histogram of a signal, and superimposes
+#       Function makes a histogram of a signal, and superimposes
 #       a gaussian fit.
 #
 #       INPUT:
@@ -692,12 +692,175 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,scale=None,plotfig=N
 # Calculate the SENSE combination weights for coils
 #
 # INPUT:
-#	coilsens = Nc x R array
+#	coilsens = Npix x Nc x R array - !NOTE for R=1, last dimension is 1
 #  	noisecov = Noise covariance matrix (Nc x Nc), defaults to Identity
-#
+#	gfactor = True to calculate g factor
 
-def senseweights(coilsens=None,noisecov=None):
-    pass
+# OUTPUT:
+#       SENSE weights matrix (R x Nc)   [U in Pruessmann paper]
+# 	g factor (Nc x 1)
+
+def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
+  
+  cs = coilsens.shape			# Get shape
+  imshape = cs[0:-2]			# Shape of image (1D, 2D or 3D)
+  print("Image shape is ",imshape)
+
+  R = coilsens.shape[-1]
+  Nc = coilsens.shape[-2]
+  Npts = np.int(np.prod(coilsens.shape)/R/Nc)
+
+  # -- Reshape to pixels x coils x aliased pixels
+  print("SENSE Weight Calc - %d pts, %d coils, R=%d" % (Npts,Nc,R))
+  #coilsens = np.reshape(coilsens,(Npts,Nc,R))
+  coilsens = np.reshape(coilsens,(-1,Nc,R),order='F')
+
+  # -- Allocate output arrays (weights and g factor)
+  senseout = np.zeros((Npts,R,Nc))
+  if gfactorcalc is True:
+    gfactor = np.zeros(R)
+    gfactorout = np.zeros((Npts,R))
+
+  if noisecalc is True:
+    ncalc = np.zeros(R)
+    ncalcout = np.zeros((Npts,R))
+
+  # -- Default noise covariance to identity matrix 
+  if (noisecov is None):
+    noisecov = np.eye(Nc)
+  psiI = np.linalg.inv(noisecov)
+
+  # -- Loop over Pixels 
+  for i in range(Npts):
+
+    C = coilsens[i,:,:]		# -- Get Nc x R sensitivity for pixel
+
+    # -- Multiply terms, minimizing # multiplications 
+    # -- Equation [2] from Pruessmann SENSE paper
+
+    Cc = np.conj(C.T)
+    ChPsiI = np.matmul(Cc,psiI)	
+    ChPsiIC = np.matmul(ChPsiI, C)	
+    ChPsiICI = np.linalg.inv(ChPsiIC)
+    sensemat = np.matmul( ChPsiICI , ChPsiI )
+    senseout[i,:,:] = sensemat
+
+
+    # -- g-factor calculation at pixel
+    # -- Pruessmann et al. Eq. 23
+    if gfactorcalc is True:
+      for g in range(0,R):	
+        gfactor[g] = np.sqrt( ChPsiICI[g,g] * ChPsiIC[g,g] )
+        if (i < 2):
+          print("  g-factor term 1 is ",np.sqrt(ChPsiICI[g,g]))
+          print("  g-factor term 2 is ",np.sqrt(ChPsiIC[g,g]))
+          print("Overall gfactor is ",gfactor[g]);
+      #print("gfactor is ",gfactor)
+      gfactorout[i,:] = gfactor
+
+    if noisecalc is True:
+      ncalc = np.sqrt( np.diag(ChPsiICI) )
+      ncalcout[i,:] = ncalc
+
+
+ 
+    if (i < 2):
+      print("For pixel %d:" % i)
+      print("SENSE weight matrix is ",sensemat)
+      print("g-factor is ",gfactor)
+      
+ 
+  # -- Reshape to pixels
+  outputshape = imshape + (R,) + (Nc,)		# !!!better way?
+  senseout = np.reshape(senseout,outputshape,order='F')
+
+  if gfactorcalc is True:
+    outputshape = imshape + (R,) 		# !!!better way?
+    gfactorout = np.reshape(gfactorout,outputshape,order='F')
+    if noisecalc is True:
+      ncalcout = np.reshape(ncalcout,outputshape,order='F')
+      return(senseout,gfactorout,ncalcout)
+    else:
+      return(senseout,gfactorout)
+
+  else:
+    return senseout
+
+
+
+
+
+# Apply SENSE combination to data.
+#
+# INPUT:
+#	signal = Npix x Nc array of received signals for FOV/R.
+#	sweights = SENSE weights, Npix x R x Nc array of SENSE weights.
+#
+#       "Npix" can be nxm or nxmxp for 2D or 3D.
+
+# OUTPUT:
+#       spix = Npix x R array of reconstructed pixels
+#
+#	It is up to the calling code to sort out the unaliased pixels...
+
+def senserecon(signal,sweights):
+
+  ws = sweights.shape
+  imshape = ws[0:-2]
+  Nc = ws[-1]
+  R = ws[-2]
+  Npts = np.int(np.prod(ws)/Nc/R)
+
+  ss = signal.shape
+
+  # -- Check Consistency
+  if (ss[-1] != Nc):
+    print("Error (senserecon):  inconsistent signal and weights matrices.")
+    print("  signal size is ",ss)
+    print("  weights size is ",ws)
+    print("  signal should be pix x channels, weights pix x R x channels")
+
+  signal = np.reshape(signal,(Npts,Nc),order='F')
+  sweights = np.reshape(sweights,(Npts,R,Nc),order='F')
+  
+  # -- Allocate output
+  #print("Output size will be %d x %d" % (Npts,R))
+  sigout = np.zeros((Npts,R),dtype='complex64') 
+  for i in range(Npts):
+    sigi = signal[i,:]
+    wi = sweights[i,:,:]
+    sigout[i,:] = np.matmul(wi,sigi)
+  
+  # -- Reshape to pixels
+  outputshape = imshape + (R,) 		# !!!better way?
+  sigout = np.reshape(sigout,outputshape,order='F')
+
+  return(sigout)
+
+
+# RMS Coil Combination
+#
+# INPUT:
+#	csignals = Npix x Nc array of pixels
+#	csens = Npix x Nc array of coil sensitivities 
+# OUTPUT:
+#  	RMS combination.
+def rmscombine(csignals,csens=None):
+
+  if (csens is None):		#!! better way?  None doesn't work for arrays
+    rmssig = np.sqrt(np.sum(csignals * np.conj(csignals), axis=-1 ))
+  else:
+    csens = np.squeeze(csens)
+    rmssens = np.sqrt(np.sum(csens * np.conj(csens),axis = -1))
+    #print("Size of rmssens is",rmssens.shape)
+    rmssig = np.sqrt(np.sum(csignals * np.conj(csignals),axis=-1))/rmssens
+
+  return rmssig
+
+    
+
+
+
 
 
 def gridmat():
@@ -769,16 +932,30 @@ def lfphase(m,n = None,w = 4):
     return ph
 
 # Label plot with x,y axis labels, and title.  Turn on grid by default
-def lplot(xlab = None,ylab = None,tit = None,ax = None,gridon = True):
+#
+# INPUT:
+#	xlab = x-axis label
+#	ylab = y-axis label
+#	ptitle = plot title
+#	ax = plot axis limits (4-tuple)
+#	gridon = True to turn on grid
+#	legend = True to turn on legend
+#
+def lplot(xlab = None,ylab = None, ptitle = None,ax = None,gridon = True,legend=False):
     if xlab is not None:
-        xlabel(xlab)
+      xlabel(xlab)
     if ylab is not None:
-        ylabel(ylab)
-    if title is not None:
-        title(tit)
+      ylabel(ylab)
+    if ptitle is not None:
+      title(ptitle)
     if ax is not None:
-        plt.axis(ax)
-    plt.grid(gridon)
+      plt.axis(ax)
+    if (gridon is True):
+      plt.grid(gridon)
+    if (legend is True):
+      plt.legend()
+
+
 
                                 
 
