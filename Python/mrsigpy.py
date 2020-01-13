@@ -304,7 +304,7 @@ def dispangle(arr):
     dispim(angarr,0,2*np.pi)
     
     
-def dispim(im,low=0,high = None):
+def dispim(im,low=0.0,high = None):
     im = np.squeeze(im)
     
     if high is None:
@@ -312,16 +312,14 @@ def dispim(im,low=0,high = None):
         imstd = np.std(np.abs(im))
         high = immax - 0.5 * imstd
         
-    scale = 256/(high-low)
+    scale = 256.0/(high-low)
     offset = scale*low
-    
-    from matplotlib import cm
-    colormap = cm.get_cmap()
-    if colormap.is_gray():        
-        print('set the colormap')
-    plt.imshow(np.abs(im))
+    im = scale * im - offset 
+    plt.figure
+    plt.imshow(np.abs(im),cmap='gray')
     plt.axis('square')
-        
+    plt.show
+    
     
 def displogim(im):
     im = np.squeeze(im)
@@ -541,8 +539,18 @@ def epg_stim_calc(flips, in_degs = True):
 def ft(dat):
     return np.fft.fftshift(np.fft.fft2(np.fft.fftshift(dat)))
 
-def gaussian(x,mn,sig):
-    return np.exp(-(x-mn)**2/(2*sig**2))/np.sqrt(2*np.pi)/sig
+def gaussian(x,mnx,sigx,y=None,mny=None,sigy=None):
+    if (y is None):
+      return np.exp(-(x-mnx)**2/(2*sigx**2))/np.sqrt(2*np.pi)/sigx
+    else:
+      xarr = np.exp(-(x-mnx)**2/(2*sigx**2))/np.sqrt(2*np.pi)/sigx
+      xarr = np.expand_dims(xarr,axis=1)
+      yarr = np.exp(-(y-mny)**2/(2*sigy**2))/np.sqrt(2*np.pi)/sigy
+      yarr = np.expand_dims(yarr,axis=0)
+      return np.matmul(xarr,yarr)
+
+
+
 
 #       Function makes a histogram of a signal, and superimposes
 #       a gaussian fit.
@@ -692,14 +700,19 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,scale=None,plotfig=N
 # Calculate the SENSE combination weights for coils
 #
 # INPUT:
-#	coilsens = Npix x Nc x R array - !NOTE for R=1, last dimension is 1
+#	coilsens = "Npix" x Nc x R array - !NOTE for R=1, last dimension is 1
 #  	noisecov = Noise covariance matrix (Nc x Nc), defaults to Identity
 #	gfactor = True to calculate g factor
-
+#
+#	NOTE:  "Npix" can be 1D, 2D, or 3D...
+#
 # OUTPUT:
-#       SENSE weights matrix (R x Nc)   [U in Pruessmann paper]
-# 	g factor (Nc x 1)
-
+#       SENSE weights matrix (Npix x R x Nc)   [U in Pruessmann paper]
+# 	g factor ("Npix" x R) - Calculated g-factor at each pixel.
+#       calcnoise ("Npix" x R) - Calculated noise at each pixel.
+#         NOTE:  for g factor and calcnoise, the calling code knows 
+#		which image dimension(s) is/are aliased so can rearrange
+#		to plot.
 def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
   
   cs = coilsens.shape			# Get shape
@@ -708,15 +721,15 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
 
   R = coilsens.shape[-1]
   Nc = coilsens.shape[-2]
-  Npts = np.int(np.prod(coilsens.shape)/R/Nc)
+  Npts = np.int(np.prod(coilsens.shape)/R/Nc) # -- Number of pixels
 
   # -- Reshape to pixels x coils x aliased pixels
   print("SENSE Weight Calc - %d pts, %d coils, R=%d" % (Npts,Nc,R))
-  #coilsens = np.reshape(coilsens,(Npts,Nc,R))
-  coilsens = np.reshape(coilsens,(-1,Nc,R),order='F')
+  coilsens = np.reshape(coilsens,(Npts,Nc,R),order='F')
+  print("Reshaped sensitivity size",coilsens.shape)
 
   # -- Allocate output arrays (weights and g factor)
-  senseout = np.zeros((Npts,R,Nc))
+  senseout = np.zeros((Npts,R,Nc),'complex64')
   if gfactorcalc is True:
     gfactor = np.zeros(R)
     gfactorout = np.zeros((Npts,R))
@@ -745,7 +758,6 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
     sensemat = np.matmul( ChPsiICI , ChPsiI )
     senseout[i,:,:] = sensemat
 
-
     # -- g-factor calculation at pixel
     # -- Pruessmann et al. Eq. 23
     if gfactorcalc is True:
@@ -773,7 +785,7 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
   # -- Reshape to pixels
   outputshape = imshape + (R,) + (Nc,)		# !!!better way?
   senseout = np.reshape(senseout,outputshape,order='F')
-
+  
   if gfactorcalc is True:
     outputshape = imshape + (R,) 		# !!!better way?
     gfactorout = np.reshape(gfactorout,outputshape,order='F')
@@ -1048,7 +1060,7 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False,twists=True):
 
   m = np.shape(FZ)[0]
   n = np.shape(FZ)[1]
-  slabel = ('F_{','F_{-','Z_{')
+  slabel = ('F$_{','F$_{-','Z$_{')
 
   #fig = plt.figure(figsize=plt.figaspect(np.float(m)/np.float(n)))
   fig = plt.figure(figsize=(3*n,3*m))	# Note (width,height)
@@ -1077,11 +1089,9 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False,twists=True):
         epg_showstate(figax,Q,frac=frac,Nspins=Nspins,voxvar=voxelvar) 
 
         # -- Label state
-        stateval = "%s%d} = %4g +%4gj" % (slabel[mm], \
+        stateval = "%s%d}$ = %4.2f +%4.2fj" % (slabel[mm], \
 		nn,np.real(FZ[mm,nn]),np.imag(FZ[mm,nn]))
         figax.title.set_text(stateval)		# F+ states
-        #!!!  Would be great to make subscript in titles but 
-	#     Jupyter doesn't seem to handle that.
 
       # !!! Orient plots!  Could make F states from above so you just
       #     see the circle.  Once they are in color, this could be a good
@@ -1089,15 +1099,40 @@ def epg_show(FZ,Nspins=19,frac=0,skipfull=False,twists=True):
 
   return
  
+# Generate an image with a white diamond
+def diamond(width=100, nx=256,ny=256,cx=0,cy=0):
+    mx, my = np.meshgrid(np.arange(-nx/2,nx/2),np.arange(-ny/2,ny/2))
+    mx = mx - cx
+    my = my - cy
+    mp = mx+my
+    mm = mx-my
+    mout = np.zeros((ny,nx)) 
+    mout[mp<width/2] = mout[mp<width/2] + 1
+    mout[mp>-width/2] = mout[mp>-width/2] + 1
+    mout[mm<width/2] = mout[mm<width/2] + 1
+    mout[mm>-width/2] = mout[mm>-width/2] + 1
+    mout = np.maximum(mout,3)-3
+    return mout
 
-
-def circ(radius, nx,ny):
-    mx, my = np.meshgrid(np.arange(-nx/2,nx/2+1),np.arange(-ny/2,ny/2+1))
+# Generate an image with a white circle
+def circ(radius=100, nx=256,ny=256,cx=0,cy=0):
+    mx, my = np.meshgrid(np.arange(-nx/2,nx/2),np.arange(-ny/2,ny/2))
+    mx = mx - cx
+    my = my - cy
     mout = mx**2+my**2
-    mout[mout<radius] = -1000
-    mout[mout>radius] = 1000
+    r2 = radius * radius
+    mout[mout<r2] = -1000
+    mout[mout>r2] = 1000
     mout = (-mout/2000)+1
     return mout
+
+# Generate an image with points increasing with angle
+def angleim(nx=256,ny=256):
+    mx, my = np.meshgrid(np.arange(-nx/2,nx/2),np.arange(-ny/2,ny/2))
+    mc = mx + 1j*my
+    m = np.angle(mc) + np.pi
+    return(m)
+
 
 def makenoiseykspace(nscale = 0.001):
     im = circ(100, 256,256)
