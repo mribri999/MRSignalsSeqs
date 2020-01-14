@@ -709,7 +709,8 @@ def rmscoilnoise(sig=None,cov=None,csens=None,Nn=10000,Nc=1,scale=None,plotfig=N
 # OUTPUT:
 #       SENSE weights matrix (Npix x R x Nc)   [U in Pruessmann paper]
 # 	g factor ("Npix" x R) - Calculated g-factor at each pixel.
-#       calcnoise ("Npix" x R) - Calculated noise at each pixel.
+#       calcnoise ("Npix" x R) - Calculated noise at each pixel, scaled by
+#		sqrt(R) which accounts for scan-time reduction
 #         NOTE:  for g factor and calcnoise, the calling code knows 
 #		which image dimension(s) is/are aliased so can rearrange
 #		to plot.
@@ -790,7 +791,7 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
     outputshape = imshape + (R,) 		# !!!better way?
     gfactorout = np.reshape(gfactorout,outputshape,order='F')
     if noisecalc is True:
-      ncalcout = np.reshape(ncalcout,outputshape,order='F')
+      ncalcout = np.sqrt(R) * np.reshape(ncalcout,outputshape,order='F')
       return(senseout,gfactorout,ncalcout)
     else:
       return(senseout,gfactorout)
