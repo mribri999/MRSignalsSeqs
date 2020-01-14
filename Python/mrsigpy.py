@@ -726,7 +726,7 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
   # -- Reshape to pixels x coils x aliased pixels
   print("SENSE Weight Calc - %d pts, %d coils, R=%d" % (Npts,Nc,R))
   coilsens = np.reshape(coilsens,(Npts,Nc,R),order='F')
-  print("Reshaped sensitivity size",coilsens.shape)
+  #print("Reshaped sensitivity size",coilsens.shape)
 
   # -- Allocate output arrays (weights and g factor)
   senseout = np.zeros((Npts,R,Nc),'complex64')
