@@ -718,7 +718,6 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
   
   cs = coilsens.shape			# Get shape
   imshape = cs[0:-2]			# Shape of image (1D, 2D or 3D)
-  print("Image shape is ",imshape)
 
   R = coilsens.shape[-1]
   Nc = coilsens.shape[-2]
