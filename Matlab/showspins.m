@@ -1,4 +1,4 @@
-function showspins(M,scale,myc)
+%function showspins(M,scale,myc)
 %
 %	Show vector plot on one axis, that can then be rotated for 2D or 3D
 %	viewing.
@@ -9,13 +9,14 @@ function showspins(M,scale,myc)
 %
 %	Get arrow3D to make these look nicer!
 %
+function showspins(M,scale,myc)
 
 if (nargin < 1) M = [0.8,0,0.2].'; end;
 if (nargin < 2) scale = 1.0; end;
 
-sz = size(M)
-Nspins = sz(2)
-myc = mycolors(Nspins)	% -- Get nice colors, if not passed
+sz = size(M);
+Nspins = sz(2);
+myc = mycolors(Nspins);	% -- Get nice colors, if not passed
 spinorig = 0*M; 	% -- All at origin (most common)
 
 % -- Plot vectors.
