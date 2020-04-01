@@ -9,6 +9,7 @@ Np = 50;		% Frames - precession
 Nrot = 1;		% cycles
 Ry = yrot(-90/Ne);	% Rotation about My
 Rz = zrot(360/Nrot/Np);	% Rotation about Mz
+% Add: [A,B] = relax(...)	
 
 figure(3); disp('Excitation/Rotation');
 plotm(M);
@@ -22,4 +23,4 @@ for n=1:Np;
   drawnow;
 end;
 
-% Exercise:  Add relaxation so that the spins return to Mz after 5 rotations
+% Exercise:  Add relaxation so that the spins return to Mz after 5 rotations, and transverse magnetization dies out after 3 rotations.
