@@ -14,12 +14,15 @@ function Mr = mc2mr(Mc)
 
 % -- Check input is 3xN, add rows if not.
 sz = size(Mc);
-if (sz(1)~=3) Mc(3,1)=0; Mc=Mc(1:3,:); 
-disp('mc2mr.m:  Warning input is not 3 rows - zero-filling and cropping'); end; 
+if (sz(1)~=3) error('Mc should have 3 rows'); end;
 
-Mr = 0*Mc;			% Allocate
-Mr(1,:) = real((Mc(1,:)+Mc(2,:))/2);  % 1st row
-Mr(2,:) = imag((Mc(1,:)-Mc(2,:))/2);  % 2nd row
-Mr(3,:) = Mc(3,:);
+T = [1,1,0;-i,i,0;0,0,2]/2;	% Transformation
+Mr = T*Mc;
+
+% -- Alternative method 
+%Mr = 0*Mc;			% Allocate
+%Mr(1,:) = real((Mc(1,:)+Mc(2,:))/2);  % 1st row
+%Mr(2,:) = imag((Mc(1,:)-Mc(2,:))/2);  % 2nd row
+%Mr(3,:) = Mc(3,:);
 
 
