@@ -30,7 +30,7 @@ for k=1:200			% Steady state so just start after RF
   %drawnow; pause;
 end;
 
-plotm(mc2mr(Mc),0.5);
+plotm(mc2mr(Mc),1);
  
 
 

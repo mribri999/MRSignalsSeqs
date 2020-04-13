@@ -6,6 +6,7 @@
 % Starts the same as prior example...
 clear;
 
+plotlevel = 1;		% Level of detail to plot
 dt = .004;		% ms, sample spacing
 tip = 30;		% desired tip angle
 t = [-5:dt:5];		% extended time period to get 100 Hz spectral res.
@@ -17,13 +18,15 @@ rf = rf/(sum(rf)*dt)*(tip/360)/42.58;	% scale for desired flip.
 rfp = fftshift(fft(fftshift(rf)))*dt*42.58;		% RF profile, scaled
 f = ([1:length(rfp)]-length(rfp)/2)/length(rfp)/dt;	% kHz
 
-figure(1);		% Plot the RF and profile.
-subplot(2,1,1);
-plot(t(tplot),rf(tplot)); xlabel('time(ms)'); ylabel('B1 (mT)');
-subplot(2,1,2);
-freqplot = find(abs(f)<5);			% Plot only range of freqs.
-plot(f(freqplot),abs(rfp(freqplot))*360);	
-title('Small Tip Approximation'); ylabel('Flip (deg)'); xlabel('Freq (kHz)');
+if (plotlevel>2)
+  figure(1);		% Plot the RF and profile.
+  subplot(2,1,1);
+  plot(t(tplot),rf(tplot)); xlabel('time(ms)'); ylabel('B1 (mT)');
+  subplot(2,1,2);
+  freqplot = find(abs(f)<5);			% Plot only range of freqs.
+  plot(f(freqplot),abs(rfp(freqplot))*360);	
+  title('Small Tip Approximation'); ylabel('Flip (deg)'); xlabel('Freq (kHz)');
+end;
 
 TR = 5;			% ms
 T1 = 500;		% ms
@@ -96,17 +99,23 @@ ylabel('M_{xy}');
 title('Excitation/Recovery Signal vs Position');
 setprops;
 
-figure(3);
-plot(pos*100,180/pi*asin(abs(Mxye)));		% Plot of *ANGLE*
-grid on;
-xlabel('Position (cm)');
-ylabel('Flip Angle (deg)');
-title('Excitation Profile vs Position');
-setprops;
+if (plotlevel>2)
+  figure(3);
+  plot(pos*100,180/pi*asin(abs(Mxye)));		% Plot of *ANGLE*
+  grid on;
+  xlabel('Position (cm)');
+  ylabel('Flip Angle (deg)');
+  title('Excitation Profile vs Position');
+  setprops;
+end;
 
-figure(4);
-fplot(@(x)sin(pi./180.*x).*(1-exp(-5./500))./(1-exp(-5./500).*cos(pi./180.*x)),[0,60]);
-%fplot('sin(pi/180*x)*(1-exp(-5/500))/(1-exp(-5/500)*cos(pi/180*x))',[0,60]);
-lplot('Signal','Flip Angle (deg)','Signal vs Flip Angle');
-setprops;
+if (plotlevel>2)
+  figure(4);
+  fplot(@(x)sin(pi./180.*x).*(1-exp(-5./500))./(1-exp(-5./500).*cos(pi./180.*x)),[0,60]);
+  %fplot('sin(pi/180*x)*(1-exp(-5/500))/(1-exp(-5/500)*cos(pi/180*x))',[0,60]);
+  lplot('Signal','Flip Angle (deg)','Signal vs Flip Angle');
+  setprops;
+end;
+
+if (plotlevel < 4) disp('Try changing plotlevel for more/less detail.'); end;
 
