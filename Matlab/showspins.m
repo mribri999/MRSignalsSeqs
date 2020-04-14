@@ -1,23 +1,24 @@
-%function showspins(M,scale,myc)
+%function showspins(M,scale,spinorig,myc)
 %
 %	Show vector plot on one axis, that can then be rotated for 2D or 3D
 %	viewing.
 %
 %	M = 3xN spins to show
 %	scale = axis scaling [-scale scale] defaults to 1.
+%	spinorig = 3xN origin of spins
 %	myc = colors to show spins (will default to something reasonable.)
 %
 %	Get arrow3D to make these look nicer!
 %
-function showspins(M,scale,myc)
+function showspins(M,scale,spinorig,myc)
 
 if (nargin < 1) M = [0.8,0,0.2].'; end;
 if (nargin < 2) scale = 1.0; end;
+if (nargin < 3) spinorig = 0*M; end;
 
 sz = size(M);
 Nspins = sz(2);
 myc = mycolors(Nspins);	% -- Get nice colors, if not passed
-spinorig = 0*M; 	% -- All at origin (most common)
 
 % -- Plot vectors.
 

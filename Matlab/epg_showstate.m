@@ -1,5 +1,5 @@
-function epg_showstate(FZ,frac,scale,Nspins,voxelvar)
-%function epg_showstate(FZ,frac,scale,Nspins,voxelvar)
+function epg_showstate(FZ,frac,scale,Nspins,voxelvar,simpleaxes)
+%function epg_showstate(FZ,frac,scale,Nspins,voxelvar,simpleaxes)
 %
 %	Show an EPG representation in a single 3D plot.
 %	(Zero-out other states if just wanting to show 1 basis function.
@@ -7,7 +7,7 @@ function epg_showstate(FZ,frac,scale,Nspins,voxelvar)
 %	FZ = 3x1 column vector of F+,F- and Z.
 %	frac = fraction of twist, if animating.
 %	scale = axis scaling [-scale scale] defaults to 1.
-%	Nspins = #spins to show, default = 24.
+%	Nspins = #spins to show, default = 23.
 %	voxelvar = origin of spin vectors (0=center, 1=along mz, 2=along mx)
 %
 %	Get arrow3D to make these look nicer!
@@ -19,7 +19,9 @@ myc = mycolors(Nspins);
 if (nargin < 1 || length(FZ)<1) FZ = [.75;.25;-.433i]; end;
 if (nargin < 2 || length(frac)<1) frac = 0; end;
 if (nargin < 3 || length(scale)<1) scale = 1; end;
+if (nargin < 4 || length(Nspins)<1) Nspins = 23; end;
 if (nargin < 5 || length(voxelvar)<1) voxelvar=0; end;
+if (nargin < 6 || length(simpleaxes)<1) simpleaxes=0; end;
 
 % -- Get vectors to plot
 
@@ -52,9 +54,37 @@ for k=1:Nspins
 end;
 axis(scale*[-1 1 -1 1 -1 1]);
 
-xlabel('M_x');
-ylabel('M_y');
-zlabel('M_z');
+if (voxelvar == 0)
+  xlab='M_x';
+  ylab='M_y';
+  zlab='M_z';
+end;
+if (voxelvar == 1)
+  xlab='M_x';
+  ylab='M_y';
+  zlab='Voxel Dir (z) x2';
+end;
+if (voxelvar ==2 )
+  xlab='Voxel Dir (z)';
+  ylab=' ';
+  zlab='M_z';
+end;
+
+% Apply labels
+xlabel(xlab);
+ylabel(ylab);
+zlabel(zlab);
+   
+if (simpleaxes==1)
+     hold on;
+     axis off;
+     plot3([-1 1],[0 0],[0 0]); % x axis
+     plot3([0 0],[-1 1 ],[0 0]);        % y axis
+     plot3([0 0],[0 0],[-1 1]); % z axis
+     text(1,0,0,xlab); text(0,1,0,ylab);                      % Mx, My labels
+     text(0,0,1,zlab);
+     hold off;
+end;
 
 axis square;
 lighting phong; camlight right;

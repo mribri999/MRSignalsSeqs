@@ -1,6 +1,3 @@
-
-
-function epg_show(FZ,frac,scale,Nspins,showtwists,shiftfs,simpleaxes)
 %function epg_show(FZ,frac,scale,Nspins,showtwists,shiftfs,simpleaxes)
 %
 %	Show all (n+1) EPG states in 3x(n+1) plot
@@ -14,6 +11,7 @@ function epg_show(FZ,frac,scale,Nspins,showtwists,shiftfs,simpleaxes)
 %	Run with no arguments for an example.
 %
 %	Use arrow3D for prettier plots!
+function epg_show(FZ,frac,scale,Nspins,showtwists,shiftfs,simpleaxes)
 
 if (nargin < 1 || length(FZ)<1) FZ = [.3 0.5; 0.3 0.25; 0.2 0.2]; end;
 if (nargin < 2 || length(frac)<1) frac = 0; end;
