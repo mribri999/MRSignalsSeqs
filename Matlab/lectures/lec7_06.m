@@ -5,9 +5,9 @@
 
 % -- Start by making a nice image that will show aliasing etc
 
-Nruns=10;	% # runs for SNR estimtes
+Nruns=50;	% # runs for SNR estimtes
 N=256;
-R=3;
+R=1;
 % see below for Nc and psi
 
 cscale = 30000;	% Roughly normalize coil sensitivity
@@ -142,6 +142,7 @@ for n=1:Nruns
     for y = 1:Ny/R
       csig = squeeze(cnims(y,x,:));
       w = squeeze(weights(y,x,:,:));
+      w = reshape(w,R,Nc);
       senseims(y,:,x) = w*csig;
    
     end;
