@@ -5,12 +5,11 @@
 
 % -- Start by making a nice image that will show aliasing etc
 
-clear; close all;
 Nruns=10;	% # runs for SNR estimtes
 N=256;
-Nc=4;	% Hard-coded anyway, but cleaner.
 R=3;
-psi = eye(Nc);	% Equal, uncorrelated noise
+% see below for Nc and psi
+
 cscale = 30000;	% Roughly normalize coil sensitivity
 
 set(0,'defaultAxesFontSize',8); % Default font sizes
@@ -24,21 +23,29 @@ im = cat(1,cat(2,im1,im2),cat(2,im3,im4));
 
 %dispim(im); title('Truth Image');
 
-% -- Coil Sensitivities
+% -- Coil Sensitivities (define Nc at end...)
 coils=zeros(N,N,4);
 coils(:,:,1) = gaussian2d(N,[N/2,N/4],N/4);
 coils(:,:,2) = gaussian2d(N,[N/4,N/2],N/4);
 coils(:,:,3) = gaussian2d(N,[3*N/4,N/2],N/4);
 coils(:,:,4) = gaussian2d(N,[N/2,3*N/4],N/4);
+
+
+%coils(:,:,5) = ones(N,N)/30000;	% Add in 'body' coil (all 1!)
+% Make sure this matches NC
+Nc = size(coils,3);
+psi = eye(Nc);	% Equal, uncorrelated noise
+
+
 coils = cscale * coils;		% Roughly normalize
 figure(1);
 % -- Channel images
 cims = 0*coils;
-for k=1:4 
+for k=1:Nc 
   cims(:,:,k) = coils(:,:,k).*im; 
-  subplot(2,4,k); dispim(coils(:,:,k)); tt = sprintf('Coil Sensitivity %d',k); title(tt); 
+  subplot(2,Nc,k); dispim(coils(:,:,k)); tt = sprintf('Coil Sensitivity %d',k); title(tt); 
   axis equal; axis off;
-  subplot(2,4,k+4); dispim(cims(:,:,k)); tt = sprintf('Sig %d',k); title(tt); 
+  subplot(2,Nc,k+Nc); dispim(cims(:,:,k)); tt = sprintf('Sig %d',k); title(tt); 
   axis equal; axis off;
 end;
 
