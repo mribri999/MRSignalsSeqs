@@ -6,6 +6,7 @@
 % -- Start by making a nice image that will show aliasing etc
 
 clear; close all;
+Nruns=10;	% # runs for SNR estimtes
 N=256;
 Nc=4;	% Hard-coded anyway, but cleaner.
 R=3;
@@ -100,7 +101,6 @@ subplot(1,2,2); dispim(noise); axis off; title('Calculated Noise');
 
 % ========= ACTUALLY DO A RECONSTRUCTION!! =======
 
-Nruns = 100;
 cims =  permute(cims,[1,3,4,2]);	% reorder coil images
 cims =  sum(cims,4);			% ALIAS IMAGES!!
 
