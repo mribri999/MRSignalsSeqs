@@ -7,7 +7,7 @@
 
 Nruns=50;	% # runs for SNR estimtes
 N=256;
-R=1;
+R=3;
 % see below for Nc and psi
 
 cscale = 30000;	% Roughly normalize coil sensitivity
