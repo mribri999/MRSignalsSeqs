@@ -6,14 +6,13 @@
 
 refoc_angle = 120/180*pi;
 stabilize=1;
-cpmg=0;
+cpmg=1;
 pausit=1;
 
 figure(1); clf;
 
 Q0 = epg_m0();   % Start at equilibrium
 epg_show(Q0); title('Equilibrium'); disp('press enter'); pause;
-if (pausit) disp('press enter'); pause; end;
 
 if (cpmg)
   Q0= epg_rf(Q0,pi/2,pi/2)      % Flip 90 about y
@@ -39,8 +38,10 @@ if (pausit) disp('press enter'); pause; end;
 Q3 = epg_grad(Q2)
 epg_show(Q3); title('Spin Echo'); 
 if (pausit) disp('press enter'); pause; end;
+
+% Zero out states to isolate pathways, if desired
 %Q3(1)=0;	% Zero F0 state
-Q3(3,2)=0;	% Zero Z1 state.
+%Q3(3,2)=0;	% Zero Z1 state.
 
 Q4 = epg_grad(Q3)
 epg_show(Q4); title('before next refocusing'); 
