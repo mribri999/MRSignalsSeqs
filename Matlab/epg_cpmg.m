@@ -17,15 +17,23 @@
 
 function [s,phasediag,P] = epg_cpmg(flipangle,etl,T1,T2,esp)
 
+if (nargin < 1) flipangle = pi*ones(1,12); end;
+
 % -- Default parameters:  ETL = length(flipangle)
-if (length(etl)==0) etl = length(flipangle); end;
+if (nargin < 2 || length(etl)==0) etl = length(flipangle); end;
 
 if (length(flipangle)==1) && (etl > 1) && (abs(flipangle)<pi)	
   % -- 1st flip reduced trick (Hennig)
   flipangle(2)=flipangle(1);
-  flipangle(1)=(pi*exp(i*angle(flipangle(2)))+flipangle(2))/2;
+  flipangle(1)=(pi+abs(flipangle(2)))/2/abs(flipangle(2)) * flipangle(2);
 end;
 if (etl > length(flipangle)) flipangle(end+1:etl) = flipangle(end); end;
+
+
+if (nargin < 3) T1 = 1; end; %  sec
+if (nargin < 4) T2 = 0.1; end; % sec
+if (nargin < 5) esp = 0.01; end;	% sec
+
 
 
 
@@ -52,7 +60,16 @@ for ech=1:etl
 
 end;
 
+set(0,'defaultAxesFontSize',14);        % Default font sizes
+set(0, 'DefaultLineLineWidth', 2);      % Default line width
+
 plotstate = cat(1,Pstore,Zstore);
+subplot(1,2,1);
+plot([1:etl]*esp,abs(s));
+lplot('Echo Time','Signal','CPMG: Signal vs Echo Time');
+
+subplot(1,2,2);
 dispim(plotstate);
 xlabel('Echo'); ylabel('F(top) and Z(bottom) States');
+title('F and Z states vs time');
 phasediag = plotstate;	
