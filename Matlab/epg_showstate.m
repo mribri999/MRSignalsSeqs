@@ -48,6 +48,7 @@ for k=1:Nspins
     h = plot3([spinorig(1,k) M(1,k)],[spinorig(2,k) M(2,k)],[spinorig(3,k) M(3,k)]);
     set(h,'LineWidth',3);
     set(h,'Color',myc(k,:));
+    view(37,30);
     hold on;
     grid on;
   end;
@@ -81,8 +82,8 @@ if (simpleaxes==1)
      plot3([-1 1],[0 0],[0 0]); % x axis
      plot3([0 0],[-1 1 ],[0 0]);        % y axis
      plot3([0 0],[0 0],[-1 1]); % z axis
-     text(1,0,0,xlab); text(0,1,0,ylab);                      % Mx, My labels
-     text(0,0,1,zlab);
+     text(scale,0,0,xlab); text(0,scale,0,ylab);                      % Mx, My labels
+     text(0,0,scale,zlab);
      hold off;
 end;
 

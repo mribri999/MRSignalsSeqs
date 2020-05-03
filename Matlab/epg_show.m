@@ -38,9 +38,9 @@ for mm = 1:m			% -- Rows (F+,F-,Z)
    Q = 0*FZ; Q(mm,nn)=FZ(mm,nn);		% Just 1 basis at a time
 
    % -- Setup Titles
-   if (mm==1) tt = sprintf('F_{%d} = %0.2f + %0.2f',nn-1,real(sum(Q(:))), ...
+   if (mm==1) tt = sprintf('F{^+_%d} = %0.2f + %0.2f',nn-1,real(sum(Q(:))), ...
 		imag(sum(Q(:)))); end;
-   if (mm==2) tt = sprintf('F_{-%d} = %0.2f + %0.2f',nn-1,real(sum(Q(:))), ...
+   if (mm==2) tt = sprintf('F{^-_%d} = %0.2f + %0.2f',nn-1,real(sum(Q(:))), ...
 		imag(sum(Q(:)))); end;
    if (mm==3) tt = sprintf('Z_{%d} = %0.2f + %0.2f',nn-1,real(sum(Q(:))), ...
 		imag(sum(Q(:)))); end;
@@ -71,8 +71,8 @@ for mm = 1:m			% -- Rows (F+,F-,Z)
      plot3([-1 1],[0 0],[0 0]);	% x axis
      plot3([0 0],[-1 1 ],[0 0]);	% y axis
      plot3([0 0],[0 0],[-1 1]);	% z axis
-     text(1,0,0,'M_x'); text(0,1,0,'M_y'); 			% Mx, My labels
-     if (mm>2 || (mm==2 && nn==1)) text(0,0,1,'M_z');  end; 	% Mz Labels
+     text(scale,0,0,'M_x'); text(0,scale,0,'M_y'); 		% Mx, My labels
+     if (mm>2 || (mm==2 && nn==1)) text(0,0,scale,'M_z');  end;	% Mz Labels
      hold off;
    end;
  end;
