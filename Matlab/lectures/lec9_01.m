@@ -3,8 +3,8 @@
 % 
 % Balanced SSFP signal plot
 
-TE = 0;	% ms
 TR = 5;		% ms
+TE = 0;		% ms
 flip = 60;	% degrees
 T1 = 1000;	% ms
 T2 = 200;	% ms
