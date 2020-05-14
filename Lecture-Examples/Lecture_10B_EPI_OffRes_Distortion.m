@@ -1,7 +1,7 @@
 %% This script demonstrates off-resonance distortion in EPI.
 %
 % DBE@STANFORD.EDU (May 2020) for Rad229
-% close all; clear all;
+close all; clear all;
 %% Default parameters
 N=128;                    % Matrix is NxM (then padded later to accomodate motion)
 gamma_bar=42.57e6;        % 1H gyromagnetic ratio [Hz/T]
@@ -20,10 +20,10 @@ for n=1:N
   Obj0_dist(:,:,n)=Obj0_dist(:,:,n).*phs_off; % Object accumulates phase during EPI duration
 end
 
-%%
-% disp=2*pi*freq_scl*ESP;
-disp=freq_scl*ESP*N;
-figure; imagesc(disp); colorbar;
+% %%
+% % disp=2*pi*freq_scl*ESP;
+% disp=freq_scl*ESP*N;
+% figure; imagesc(disp); colorbar;
 
 %% Create a noisy object and k-space
 Obj0_dist = Obj0_dist + (randn(size(Obj0_dist))+1i*randn(size(Obj0_dist)))/50; % Add some complex noise
@@ -49,7 +49,7 @@ subplot(2,2,4); imagesc(angle(IM_epi_dist)); title('Off-Resonance [rad]'); color
 %% Simulate the BOTTOM-UP EPI trajectory...grab one k-line from each time
 k_epi_f = zeros(N);
 for n=1:N
-  kspc_epi_dist(N-(n-1),:) = kspc_dist(n,:,n); % Grab one echo per ky-line during phase accumulation
+  kspc_epi_dist(N-(n-1),:) = kspc_dist(N-(n-1),:,n); % Fill the bottom ky-line (N-(n-1)) with the first echo (n)
 end
 IM_epi_dist2 = ifft2(fftshift(kspc_epi_dist)); % Image of distorted object
 
