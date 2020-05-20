@@ -1,0 +1,12 @@
+void run_kernel_diff(double **G_out, int *N_out, double **ddebug, int verbose,
+                            int N, double dt, double gmax, double smax, double TE, 
+                            int N_moments, double *moments_params, double PNS_thresh,  
+                            double T_readout, double T_90, double T_180, int diffmode,
+                            double bval_weight, double slew_weight, double moments_weight, 
+                            double bval_reduce,  double dt_out,
+                            int N_eddy, double *eddy_params,
+                            int is_Gin, double *G_in, 
+                            double search_bval,
+                            int N_gfix, double *gfix,
+                            double slew_reg,
+                            int Naxis);
