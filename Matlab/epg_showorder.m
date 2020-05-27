@@ -43,7 +43,6 @@ lighting phong; camlight right;
 tt = sprintf('Z_{%d} = %0.2f + i%0.2f',n,real(FZ(3)),imag(FZ(3)));
 title(tt);
 
-ftwist
 
 subplot(2,2,3);
 Q1 = Q; Q1(2:3,:)=0;

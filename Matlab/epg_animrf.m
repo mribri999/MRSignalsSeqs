@@ -7,13 +7,13 @@ function FZ = epg_animrf(FZ,flip,phase,N,scale,showorder)
 
 if (nargin < 4) N = 24; end;
 if (nargin < 5) scale = 1; end;
-if (nargin < 6) showorder=0; end;
+if (nargin < 6) showorder=-1; end;
 
 Nf = 20;
 
 for p=0:Nf
 
-  if (showorder==0)
+  if (showorder==-1)
     epg_showstate(FZ,0,scale,N);
   else
     epg_showorder(FZ(:,showorder+1),showorder,0);
