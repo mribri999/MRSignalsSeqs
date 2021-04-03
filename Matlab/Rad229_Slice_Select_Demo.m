@@ -21,27 +21,37 @@
 
 %% These questions can be used to further explore the code and concepts.
 % RF Questions:
-%     1) What is the highest possible flip angle without a B1 warning?
+%     1.1) What is the highest possible flip angle without a B1 warning?
 %     
-%     2) A 180' pulse exceeds B1,max. What adjustments can be made to enable a 180'?
+%     1.2) A 180' pulse exceeds B1,max. What adjustments can be made to enable a 180'?
 %
-%     3) [Advanced] Update the code to account for the slice position.
+%     1.3) Design the shortest possible TBW=8 refocusing pulse that doesn't exceed B1,max.
 %
-%     4) [Advanced] Design the shortest possible TBW=8 refocusing pulse that doesn't exceed B1,max.
+%     1.4) [Advanced] Update the code to account for the slice position.
+%
+%     1.5) [Advanced] ake a plot of peak B1 for the shortest duration RF pulses for flip angles 
+%          from 5 to 180 degrees. All pulses should be within the default hardware limits. What do 
+%          you observe about the shape of the curve and the hardware limits encountered.
 %
 % Gradient Questions:
-%     1) What is the thinnest slice you can excite without a gradient warning?
+%     2.1) What is the thinnest slice you can excite without a gradient warning?
 %
-%     2) What adjustments can be made to enable exciting a 0.1mm slice?
+%     2.2) What adjustments can be made to enable exciting a 0.1mm slice?
 %
-%     3) [Advanced] Demonstrate the effectiveness of the post-excitation refocusing gradient.
+%     2.3) [Advanced] Demonstrate the effectiveness of the post-excitation refocusing gradient.
+%
+%     2.4) [Advanced] What is the thinnest slice you can excite with a 10' flip angle 
+%          2ms TBW=6 RF pulse (within hardware limits)? What is the shortest duration you can 
+%          make this pulse?
 %
 % Non-1H Imaging Questions (sys.gamma_bar=10.7084e6 [Hz/T]):
-%     1) What happens if the default pulse is used to excite 13C? Why?
+%     3.1) What happens if the default pulse is used to excite 13C? Why?
 %
-%     2) What else needs to change about the RF pulse to excite 13C?
+%     3.2) What else needs to change about the RF pulse to excite 13C?
 %
-%     3) [Advanced] Design an RF pulse to refocus 13C a 10mm slice within hardware limits.
+%     3.3) [Advanced] Design an TBW=10 RF pulse to refocus 13C for a 10mm slice within hardware 
+%          limits. If you were to build an MRI system for 13C imaging would you prefer an increase
+%          in G_max or B1_max? Why?
 
 function [acq, sys, Gx, Gy, Gz, RF] = Rad229_Slice_Select_Demo(acq, RF)
 
@@ -55,9 +65,9 @@ if nargin == 0
   acq.dz = 10.0e-3;         % Slice thickness [m]
   acq.z0 = 0.0;             % Slice position [m] (relative to isocenter)
 
-  RF.alpha = 90;            % RF flip angle [degrees]
+  RF.alpha = 180;            % RF flip angle [degrees]
   RF.TBW = 6;               % Time*bandwidth product [unitless] (relates to quality of RF pulse)
-  RF.dur = 2.5e-3;          % RF pulse duration [seconds]
+  RF.dur = 2.0e-3;          % RF pulse duration [seconds]
   RF.apod = 0.46;           % apod = 0 is non-apodized, apod = 0.5 is 'Hanning windowed', apod<0.5 is 'Hamming windowed'
 end
 

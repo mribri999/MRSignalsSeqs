@@ -21,7 +21,7 @@
 % DBE@STANFORD.EDU (March 2021) for Rad229
 
 %% These questions can be used to further explore the code and concepts.
-% Phase Encode Questions:
+%  Phase Encode Questions:
 %     1) How many cycles are there across the FOV when using the maximum phase encoding gradient?
 %        Does this satisfy Nyquist?
 %

@@ -8,10 +8,11 @@
 %            acq.FOVy = 150e-3;  % Field-of-view along y-direction [m]
 %            acq.Ny = 15;        % Number of pixels to discretize FOVy [#]
 % 
-%            acq.n_kx = 0;           % Fourier kx-sampling point to show
-%            acq.n_ky = 4;           % Fourier ky-sampling point to show
+%            acq.n_kx = 0;       % Fourier kx-sampling point to show (=0 is middle of k-space)
+%    
+%            acq.n_ky = 4;       % Fourier ky-sampling point to show (=0 is middle of k-space)
 %
-%            acq.upsamp = 5;        % Upsampling factor for visualizing patterns
+%            acq.upsamp = 5;     % Upsampling factor for visualizing patterns
 %
 % OUTPUTS -  acq - Acquisition parameter structure
 %              F - Fourier encoding pattern
@@ -24,11 +25,14 @@
 %
 %   2) Set acq.n_kx = 0 and acq.n_ky = 4. How many phase cycles do you see along the phase encode direction? 
 %
-%   3) Set acq.n_kx = 3 and acq.n_ky = 5. How many phase cycles do you see along the phase encode direction? 
+%   3) Set acq.n_kx = 2 and acq.n_ky = 5. How many phase cycles do you see along the phase and frequency encode direction? 
+%
+%   4) If you set acq.n_kx = k_x,max and acq.n_ky = k_y,max does this satisfy Nyquist sampling? Explain.
 %
 %   4) [Advanced] Revise the code to compute the applied phase and frequency encoding gradients, then dkx and dky.
 %
-%   5) [Advanced] Use this code to estimate the Fourier coefficients for an object.
+%   5) [Advanced] Use this code to estimate the Fourier coefficients for an object, then use the FFT 
+%      to recover an image of the object.
 
 function [acq, F] = Rad229_Fourier_Encoding(acq)
 
@@ -49,6 +53,10 @@ if nargin == 0
 
   acq.upsamp = 5;        % Upsampling factor for visualizing patterns
 end
+
+%% Check the index is within range
+if abs(acq.n_kx) > ( (acq.Nx - 1) / 2 ), warning('acq.n_kx will exceed kx_max.'); end
+if abs(acq.n_ky) > ( (acq.Ny - 1) / 2 ), warning('acq.n_ky will exceed ky_max.'); end
 
 %% Calculate some spatial parameters
 acq.x_pos = linspace(-acq.FOVx/2, acq.FOVx/2, acq.upsamp * acq.Nx); % Define the pixel locations [m]

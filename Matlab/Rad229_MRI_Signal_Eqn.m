@@ -1,4 +1,4 @@
-%% Rad229_MRI_Signal_Eqn
+%% Rad229_MRI_Signal_Eqn -- INCOMPLETE FUNCTION
 %
 % This script demonstrates the MRI signal equation and Fourier encoding for
 % an imaging experiment
@@ -9,6 +9,8 @@
 %     X) Make a plot of the k-space trajectories from the gradient
 %     waveforms. Distinguish between k-points that are acquired and those
 %     that are not.
+
+error('This function is incomplete.')
 
 %% Define MRI system constants
 sys = Rad229_MRI_sys_config;
