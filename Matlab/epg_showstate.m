@@ -44,7 +44,8 @@ hold off;
 
 for k=1:Nspins
   if (exist('arrow3D'))
-    arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8,0.03*scale);
+    %arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8,0.03*scale);  % Pre 2021 arrow3D
+    arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8);
   else
     Mplot = M+spinorig;		% Add origin, s
     h = plot3([spinorig(1,k) Mplot(1,k)],[spinorig(2,k) Mplot(2,k)],[spinorig(3,k) Mplot(3,k)]);
