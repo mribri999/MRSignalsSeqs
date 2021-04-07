@@ -5,7 +5,7 @@
 % -- Initialize
 z = [-1:0.05:1];                % Z locations
 M = [0*z; 0*z; ones(size(z))];  % Equilibrium magnetization.
-anim = 0;			% Set to 1 to "animate"
+anim = 1;			% Set to 1 to "animate"
 if (anim==1)
   global framenum;		% Setup to save frames
   global filestem;		
@@ -34,7 +34,7 @@ for k=1:Nrf
   if (anim==1)
     plotm(Mxy,1,[0*z;0*z;z]);	% Plot it.
     drawnow;
-    saveframe;
+    epg_saveframe;
   end;
 end;
 
@@ -45,7 +45,7 @@ for k=1:floor(Nrf/2)+4		% The "+4" is empirically determined!!
   if (anim==1)
     plotm(Mxy,1,[0*z;0*z;z]);	% Plot it.
     drawnow;
-    saveframe;
+    epg_saveframe;
   end;
 end;
    
