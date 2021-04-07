@@ -41,11 +41,13 @@ end;
 
 % -- Plot vectors.
 hold off;
+
 for k=1:Nspins
   if (exist('arrow3D'))
     arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8,0.03*scale);
   else
-    h = plot3([spinorig(1,k) M(1,k)],[spinorig(2,k) M(2,k)],[spinorig(3,k) M(3,k)]);
+    Mplot = M+spinorig;		% Add origin, s
+    h = plot3([spinorig(1,k) Mplot(1,k)],[spinorig(2,k) Mplot(2,k)],[spinorig(3,k) Mplot(3,k)]);
     set(h,'LineWidth',3);
     set(h,'Color',myc(k,:));
     view(37,30);
