@@ -25,7 +25,8 @@ myc = mycolors(Nspins);	% -- Get nice colors, if not passed
 hold off;
 for k=1:Nspins
   if (exist('arrow3D'))
-    arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8,0.03*scale);
+    %arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8,0.03*scale);
+    arrow3D(spinorig(:,k),M(:,k),myc(k,:),0.8);
   else
     h = plot3([spinorig(1,k) M(1,k)],[spinorig(2,k) M(2,k)],[spinorig(3,k) M(3,k)]);
     set(h,'LineWidth',3);
