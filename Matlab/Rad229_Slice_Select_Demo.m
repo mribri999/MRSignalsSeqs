@@ -116,6 +116,6 @@ Gx.G = zeros ( size ( Gz.G ) );   % Gradient amplitude [T/m]
 Gy.G = zeros ( size ( Gz.G ) );   % Gradient amplitude [T/m]
 
 %% Plot the final waveforms
-Rad229_PSD_fig(1e6*RF.B1, Gz.G, Gy.G, Gx.G, sys.dt);
+Rad229_PSD_fig(1e6*RF.B1, Gx.G, Gy.G, Gz.G, sys.dt);
 
 return
