@@ -2,7 +2,7 @@
 % encoding (k-space).
 %
 % DBE@STANFORD.EDU (March 2021) for Rad229
-
+error('This function is incomplete.')
 %% Define MRI system constants
 sys = Rad229_MRI_sys_config;
 
