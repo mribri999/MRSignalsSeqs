@@ -1,3 +1,4 @@
+error('This is outdated...');
 %% This script demonstrates the convolution of a single time-constant eddy 
 %  current impulse response function with a trapezoidal gradient waveform.
 %
