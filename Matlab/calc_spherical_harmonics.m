@@ -32,7 +32,7 @@ for n = 0 : nmax
   P = gradient_nonlin_legendre(n,cos(Theta));
   F = ( R / R0 ) .^ n;
   for m = 0 : n
-    F2 = Alpha( n+1 , m + 1 ) * cos( m * Phi ) + Beta( n + 1 , m + 1) * sin( m * Phi );
+    F2 = Alpha( n + 1 , m + 1 ) * cos( m * Phi ) + Beta( n + 1 , m + 1) * sin( m * Phi );
     B = B + F .* P( m + 1 , : ) .* F2;
   end
 end
