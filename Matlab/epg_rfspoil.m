@@ -1,4 +1,4 @@
-% function [s,phasediag,P] = epg_gradspoil(flipangle,phinc,N,T1,T2,TR)
+% function [s,phasediag,P] = epg_rfspoil(flipangle,phinc,N,T1,T2,TR)
 %
 %	EPG Simulation of RF-spoiled sequence.  
 %
@@ -8,9 +8,10 @@
 %	T1,T2,TR = relaxation times and TR
 %
 %	All states are kept, for demo purposes, though this 
-%	is not really necessary.
+%	is not really necessary.  NOTE:  if phinc=0, this should give
+%	the same result as epg_gradspoil.m
 
-function [s,phasediag,P] = epg_gradspoil(flipangle,phinc,N,T1,T2,TR)
+function [s,phasediag,P] = epg_rfspoil(flipangle,phinc,N,T1,T2,TR)
 
 if (nargin < 1) flipangle = pi/6; end;
 if (nargin < 2) phinc = 117/180*pi; end;
