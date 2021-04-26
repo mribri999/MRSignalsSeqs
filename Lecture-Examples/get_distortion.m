@@ -4,9 +4,9 @@ x = Sx(:).';
 y = Sy(:).';
 z = Sz(:).';
 
-bx = calc_harmonics(Alpha_x, Beta_x, x, y, z, R0);
-by = calc_harmonics(Alpha_y, Beta_y, x, y, z, R0);
-bz = calc_harmonics(Alpha_z, Beta_z, x, y, z, R0);
+bx = calc_spherical_harmonics(Alpha_x, Beta_x, x, y, z, R0);
+by = calc_spherical_harmonics(Alpha_y, Beta_y, x, y, z, R0);
+bz = calc_spherical_harmonics(Alpha_z, Beta_z, x, y, z, R0);
 
 Bx = reshape(bx, size(Sx));
 By = reshape(by, size(Sy));
