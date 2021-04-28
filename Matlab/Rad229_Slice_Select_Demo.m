@@ -65,7 +65,7 @@ if nargin == 0
   acq.dz = 10.0e-3;         % Slice thickness [m]
   acq.z0 = 0.0;             % Slice position [m] (relative to isocenter)
 
-  RF.alpha = 180;            % RF flip angle [degrees]
+  RF.alpha = 90;            % RF flip angle [degrees]
   RF.TBW = 6;               % Time*bandwidth product [unitless] (relates to quality of RF pulse)
   RF.dur = 2.0e-3;          % RF pulse duration [seconds]
   RF.apod = 0.46;           % apod = 0 is non-apodized, apod = 0.5 is 'Hanning windowed', apod<0.5 is 'Hamming windowed'
