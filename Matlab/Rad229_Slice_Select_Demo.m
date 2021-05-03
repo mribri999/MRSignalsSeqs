@@ -1,3 +1,4 @@
+
 %% Rad229_Slice_Select_Demo – Demonstrate designing both the RF pulse and gradient for slice selection.
 % 
 %  SYNTAX - [acq, sys, Gx, Gy, Gz, RF] = Rad229_Slice_Select_Demo(acq, RF);
