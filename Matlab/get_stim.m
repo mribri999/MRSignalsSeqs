@@ -3,7 +3,7 @@ function stim_out = get_stim( G, dt )
 %   Detailed explanation goes here
 
     alpha = 0.333;
-    r = 23.4;
+    r = 20.0;
     c = 334e-6;
     Smin = r/alpha;
     coeff = zeros(numel(G), 1);
