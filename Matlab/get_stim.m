@@ -11,6 +11,7 @@
 
 function stim_out = get_stim( G, dt )
 
+
 %% Define the PNS model coefficients
 L_grad = 0.333; % Effective gradient coil length [m] (sometimes called alpha)
 r = 20.0; % Rheobase [T/s] {gradient coild specific}
