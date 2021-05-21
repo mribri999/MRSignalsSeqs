@@ -22,11 +22,34 @@ kdata = ksquare(centers,19,kx+i*ky,0,0); % k-space data
 %kmatrix = gridmat(kx+i*ky,kdata,ones(size(kdata)),256);
 
 % ==== DEFINE SAMPLING TRAJECTORY HERE ====
-ksamp = ones(256,256);	% FULLY sampled
+ksamp = ones(256,256);  % FULLY sampled
 
-ksamp(1:2:end,:) = 0;	% <<=== MODIFY TRAJECTORY HERE!!
+% == Parallel Imaging with Calibration
+if (0)
+    ksamp(1:2:end,:) = 0;   % <<=== MODIFY TRAJECTORY HERE!!
+    kcalhw = 0;                        % Calibration half-width
+    ksamp(129-kcalhw:128+kcalhw,:)= 1;    % Add in calibration region
+end
 
-kactual = kdata.*ksamp;	% 
+% == Random Sampling
+if (1) 
+    krand = rand(256,256);  % Random numbers 0 to 1
+    R=4;
+    ksamp = 0*ksamp;        % Default is not sampled.
+    ksamp(find(krand(:)<(1/R)))=1;   % Choose sample locations
+    kcalhw = 4;                        % Calibration half-width
+    ksamp(129-kcalhw:128+kcalhw,129-kcalhw:128+kcalhw)= 1;    % Add in calibration region
+end
+kactual = kdata.*ksamp; % 
 
-im = psf2d(kactual);	% Default, 256x256 k-space.
+im = psf2d(ksamp);    % Default, 256x256 k-space.
+
+figure;
+dispim(ft(kactual));  
+title('Image');
+
+
+
+
+
 
