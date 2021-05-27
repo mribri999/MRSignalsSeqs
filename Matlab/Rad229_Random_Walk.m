@@ -10,10 +10,14 @@
 % 2) Change the temperature.
 %
 % 3) Introduce anisotropy.
+%
+% To Do:
+%  Define D and pick dx etc., or pick dx and compute D
+
 
 %% This function demonstrates a 1D random walk
-N_step=100;                 % Number of random walk steps
-x = zeros(1,N_step);        % Starting x-position
+N_step = 100;               % Number of random walk steps
+x = zeros( 1 , N_step);     % Starting x-position
 dx = 55.5e-6;               % Spatial step size per dt [mm]
 dt = 1e-6;                  % Temporal step size [s]
 

@@ -6,7 +6,7 @@
 % DBE@STANFORD.EDU (May 2020) for Rad229
 % Code base developed by Kévin Moulin
 %
-% Example demos:
+% ExG_maxe demos:
 % 1) Examine the phase history amongst the spins. 
 %    [Change the diffusion coefficient widely.]
 %
@@ -15,43 +15,45 @@
 % 3) Examine the effect of gradient direction.
 %
 % 4) EXTRA - delta, Delta, b-value changes...
+%
+% To Do:
+%   Refine code overall
+%   Check gradient waveform design
+%   Compare phase variance to diffusion etc.
+%   Add GRE ans SE options
+%   Visualize the additional phase from diffusion (hidden by total phase)
 
 %% Initialization
 close all; clear all;
-rng('default');                                                     % Set the random-number-generator seed
+rng(0,'twister');                                                     % Set the random-number-generator seed
 ANIM = 1;                                                           % Animation flag (slow...)
 
 %% General parameters
 sys = Rad229_MRI_sys_config;                                        % Define MRI system constants
-% World.Gamma = 267.513*10^6;                                         % 1H gyromagnetic ratio [rad/(s.T)]
-% World.Gamma = 2 * pi * sys.gamma_bar;
-% World.dt = 10e-6;                                                   % Time step for simulation [s]
-World.DisplayPoint = 50;                                            % Number of point before display
-World.Pixel = [0.5 0.5].*1e-3;                                      % Pixel dimension [m]
+World.DisplayPoint = 50;                                            % Number of simulated points to skip before display
+World.Pixel = [0.5 0.5] .* 1e-3;                                      % Pixel dimension [m]
 
 %% Diffusion parameters
 diff.N = 100;                                                       % Number of particles
 diff.dim = 2;                                                       % Dimensions for spin diffusion [2D]
 diff.D = [2.1 2.1].*1e-3;                                           % Coefficient of diffusion [mm^2/s]
 diff.D = diff.D.*1e-6;                                              % Change unit from [mm^2/s] to [m^2/s]
-diff.dt = sys.dt;                                                 % Use the same dt as the global dt
+diff.dt = sys.dt;                                                   % Use the same dt as the global dt
 
 %% Sequence parameters
-seq.Bvalue = 2000;                                                  % Bvalue s/mm²
-warning('Not used?')
-% seq.SlewRate=500;                                                 % Slew rate
-seq.delta = 12*1e-3;                                                % Duration of one gradient lobe [s]
-seq.DELTA = 5*1e-3;                                                 % Duration between the gradient [s]
+seq.bvalue = 2000;                                                  % b-value s/mm²
+seq.delta = 12e-3;                                                % Duration of one gradient lobe [s]
+seq.Delta = 15e-3;                                                 % Duration between the gradient [s]
 seq.direction = [1 1];                                                % Diffusion vector direction
 
-Grad = generate_gradient_points_local( seq , World , sys);                   % List of gradient points with raster time corresponding to dt
+Grad = generate_gradient_points_local( seq , World , sys );                   % List of gradient points with raster time corresponding to dt
 Grad_dir = repmat( Grad , 1 , diff.dim ) .* seq.direction;                  % List of gradient points per physical axis
 
 seq.duration = length(Grad);                                        % List of gradient points with raster time corresponding to dt
 
 %% Init the Simulation
 % Distribute N spins in the center part of the pixel for each dimension (For the 2D case, only X and Y)
-spin = zeros( diff.N , diff.dim , seq.duration );
+spin = zeros( diff.N , diff.dim , seq.duration );  % [N spins, N dimensions, N gradient raster points]
 for cpt = 1 : diff.dim
   spin( : , cpt , 1 ) = 0.2 * randn(diff.N,1) .* World.Pixel(cpt); % For X positions
 end
@@ -61,13 +63,12 @@ MR_Phase_Molecule = zeros( diff.N , seq.duration , 1);
 MR_Signal_Pixel = complex( zeros( seq.duration , 1 ) , zeros( seq.duration , 1 ) );
 
 %% Simulation
-
 % Per time point we do the following:
 % 1) Update the water molecule positions
 % 2) Apply the gradients to the water molecules
 % 3) Calculate the MR signal at the pixel scale
 % 4) (Eventually) Update the plots
-tic
+
 for cpt = 2 : 1 : seq.duration
   
   % 1) Move the spins according the diffusion parameters
@@ -78,11 +79,11 @@ for cpt = 2 : 1 : seq.duration
   
   % 2a) Repeat the gradient direction vector per spin (convert the gradient to T/m)
   Grad_dir_tmp = repmat( Grad_dir( cpt , : ) , diff.N , 1 ) * 1e-3;
-  warning('Clean up units...amplitude here too?')
   
   % 2b) Numerical integration of the spin positions x gradient, we sum over the dimensions (result in radian)
 %   MR_Phase_Molecule(:,cpt)=MR_Phase_Molecule(:,cpt-1)+ nansum(World.Gamma *World.dt*Grad_dir_tmp.*squeeze(spin(:,:,cpt)),2);
-  MR_Phase_Molecule( : , cpt ) = MR_Phase_Molecule( : , cpt-1 ) + sum( 2 * pi * sys.gamma_bar * sys.dt * Grad_dir_tmp .* squeeze( spin( : , : , cpt ) ) , 2 , 'OmitNaN' );
+  diff_phase = 2 * pi * sys.gamma_bar * sys.dt * Grad_dir_tmp;
+  MR_Phase_Molecule( : , cpt ) = MR_Phase_Molecule( : , cpt-1 ) + sum( diff_phase .* squeeze( spin( : , : , cpt ) ) , 2 , 'OmitNaN' );
    
   % 3) Calculate the MR signal at the voxel scale
 %   MR_Signal_Pixel=nanmean(cos(MR_Phase_Molecule(:,cpt))+1i*sin(MR_Phase_Molecule(:,cpt)));
@@ -91,14 +92,14 @@ for cpt = 2 : 1 : seq.duration
 end
 
 %% 4) Display the simulation
-figH=create_figure_local(MR_Phase_Molecule,spin,Grad_dir,seq.duration,World.Pixel,diff);
-Grad_dir(end/2:end,:)=-Grad_dir(end/2:end,:);
+figH = create_figure_local(MR_Phase_Molecule,spin,Grad_dir,seq.duration,World.Pixel,diff);
+Grad_dir( end/2 : end , : ) = -Grad_dir( end/2 : end , : );
 
 if ANIM
   %Uncomment to create animation/ comment to see only the final result
-  for cpt=2:1:seq.duration
-    if mod(cpt,World.DisplayPoint)==0
-      update_figure_local(figH,MR_Phase_Molecule,spin,Grad_dir,cpt);
+  for cpt = 2 : 1 : seq.duration
+    if mod( cpt , World.DisplayPoint ) == 0
+      update_figure_local( figH , MR_Phase_Molecule , spin , Grad_dir , cpt );
       pause(0.01);
     end
   end
@@ -113,24 +114,32 @@ disp(['Diffusion attenuation = ' num2str((1-abs(MR_Signal_Pixel))*100) '%']);
 
 %% Simulation functions
 function [grad]=generate_gradient_points_local( seq , World , sys)
-% unit of gamma is 1/(s . Tesla )
-% asuming grad have an unit of T/m
-% Because unit of the bvalue is s/mm2
-% We need convert the b-value in standard units
-Bval=seq.Bvalue.* 1e6; % s/mm2 -> s/m2
+% Gamma_bar has units of  [ Hz / T ] and gradients have an units of [ T / m ]
+% b-value is commonly  [ s / mm^2 ] and x1e6 to get [s / m^2]
+Bval = seq.bvalue .* 1e6; % b-value in [ s / m^2 ]
 
-grad=zeros(2+round((seq.delta+seq.DELTA)/sys.dt),1);
-grad(1+1:round((seq.delta)/sys.dt))=1;
-grad(1+round(seq.DELTA/sys.dt):end-1)=-1;
+% Define first lobe
+N_plat = ceil( seq.delta / sys.dt );
+N_dly = ceil( ( seq.Delta - seq.delta ) / sys.dt );
+Gx_pos = [0;  ones(N_plat , 1); 0];
+Gx_dly = [0; zeros(N_dly , 1); 0];
+Gx_neg = [0; -ones(N_plat , 1); 0];
+
+grad = [Gx_pos; Gx_dly; Gx_neg ];
+
+% grad = zeros( 2 + round( ( seq.delta+seq.Delta ) / sys.dt ) , 1 );
+% grad( 1+1 : round( (seq.delta) / sys.dt) ) = 1;
+% grad( 1 + round( seq.Delta / sys.dt ) : end-1 ) = -1;
 
 % For now we have a normalized gradient shape
-% We are going to calculate what is correct amplitude of this
+% We are going to calculate what is correct G_max of this
 % waveform in mT/m to match the given b-value
-Bfact=( (2 * pi * sys.gamma_bar ) ^ 2 ) * ( seq.delta ^ 2 ) *( seq.DELTA - seq.delta / 3 );
-Ampl=sqrt(Bval/Bfact);
+Bfact=( (2 * pi * sys.gamma_bar ) ^ 2 ) * ( seq.delta ^ 2 ) *( seq.Delta - seq.delta / 3 );
+G_max = sqrt( Bval / Bfact );
 
-disp(['Generated b-value ' num2str( ( (2 * pi * sys.gamma_bar ) ^ 2 ) * (seq.delta^2) * (Ampl^2) *(seq.DELTA-seq.delta/3)*1e-6) ' s/mm2 ' ] );
-grad=grad.*Ampl*1e3;  % Gradient in mT/m
+disp(['Target b-value = ',num2str(seq.bvalue),' s/mm^2']);
+disp(['Design b-value = ' num2str( ( (2 * pi * sys.gamma_bar ) ^ 2 ) * (seq.delta^2) * (G_max^2) *(seq.Delta-seq.delta/3)*1e-6) ' s/mm^2' ] );
+grad = grad .* G_max * 1e3;  % Gradient in mT/m
 end
 
 function [Dstep] = diffusion_step_local(diff)
@@ -149,6 +158,7 @@ HandleFig = figure('Units', 'normal', 'Position', [0.35 0.1 0.55 0.8]); %[left b
 subgroup1 = axes(   'Parent', HandleFig, 'Units', 'normal', 'Position',  [0.0 0.3 0.4 0.4]);  % spin Displacement
 subgroup2 = uipanel('Parent', HandleFig, 'Units', 'normal', 'Position',  [0.5 0.0 0.5 0.5]);  % Sequence
 subgroup3 = axes(   'Parent', HandleFig, 'Units', 'normal', 'Position',  [0.55 0.6 0.45 0.4]);  % Phase diagram
+% subgroup3 = axes(   'Parent', HandleFig, 'Units', 'normal', 'Position',  [0.55 0.1 0.45 0.8]);  % Phase diagram
 subgroup4_X = axes(   'Parent', HandleFig, 'Units', 'normal', 'Position',[0.0 0.7 0.4 0.1]);  % Hist X
 subgroup4_Y = axes( 'Parent', HandleFig, 'Units', 'normal', 'Position',  [0.4 0.3 0.1 0.4]);  % Hist Y
 
@@ -158,7 +168,7 @@ hold(subgroup1,'on');
 % subgroup1.XLimMode='manual';
 % subgroup1.YLimMode='manual';
 figH.wp=plot(squeeze(spin(:,1,1:cpt))',squeeze(spin(:,2,1:cpt))','Parent',subgroup1);
-figH.ws=scatter(squeeze(spin(:,1,cpt)),squeeze(spin(:,2,cpt)),80,'b','filled','Parent',subgroup1);
+figH.ws=scatter(squeeze(spin(:,1,cpt)),squeeze(spin(:,2,cpt)),50,'b','filled','Parent',subgroup1);
 
 set(subgroup1,'Visible','off');
 set(subgroup1,'xtick',[],'ytick',[]);
@@ -192,8 +202,8 @@ subgroup2_x.YAxisLocation = 'left';
 set(subgroup2_x,'Color','w');
 set(gcf,'Color','k');
 
-% subgroup2_x.XLimMode='manual';
-% subgroup2_x.XLim=[0-1000 size(Grad,1)+1000];
+subgroup2_x.XLimMode='manual';
+subgroup2_x.XLim=[0-1000 size(Grad,1)+1000];
 % subgroup2_x.YLimMode='manual';
 % subgroup2_x.YLim=[0 120];
 subgroup2_x.Color='k';
