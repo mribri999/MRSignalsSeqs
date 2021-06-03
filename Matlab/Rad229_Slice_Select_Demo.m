@@ -86,31 +86,40 @@ RF.B1 = ( RF.alpha * pi/180 ) * RF.B1 / ( 2 * pi * sys.gamma_bar * sys.dt); % Sc
 
 %% Design the gradient to excite a slice
 Gz.G_amp = RF.BW / ( sys.gamma_bar * acq.dz ); % Gradient amplitude [T/m]
-Gz.G = Gz.G_amp * ones( size( RF.B1 ) );       % Gradient amplitude [T/m]
-  if max(Gz.G)>sys.G_max, warning('Gz.G exceeds sys.G_max'); end
+  if max(Gz.G_amp)>sys.G_max, warning('Gz.G_amp exceeds sys.G_max'); end
+Gz.G_plat = Gz.G_amp * ones( size( RF.B1 ) );       % Gradient amplitude [T/m]
 
 Gz.dG = sys.S_max * sys.dt;  % Slice-select gradient incremental gradient step [T/m]
 
 Gz.G_ramp = ( 0 : Gz.dG : Gz.G_amp )'; % Readout gradient ramp [T/m]
-Gz.t_ramp = sys.G_max / sys.S_max;  % Ramp time [s]
-  if ~isinteger(Gz.t_ramp / sys.dt), warning('Gz.t_ramp is NOT an integer number of sys.dt!'); end
+  if max(Gz.G_ramp) ~= Gz.G_amp, warning('Gz.G_ramp does not reach target value of Gz.G_amp'); end
+Gz.t_ramp = sys.dt * numel(Gz.G_ramp);
+% Gz.t_ramp = sys.G_max / sys.S_max;  % Ramp time [s]
+%   if ~isinteger(Gz.t_ramp / sys.dt), warning('Gz.t_ramp is NOT an integer number of sys.dt!'); end
 
-%% Design the post-excitation refocusing gradient
-A = sum( Gz.G * sys.dt );  % The refocusing gradient needs to have half this area [T*s/m]
-Gz.G_post = -sys.G_max;    % The refocusing gradient should use the maximum hardware to be fast [T/m] 
-Gz.t_post = ( A / 2 ) / abs( Gz.G_post ) - Gz.t_ramp;  % Duration of pre-phasing gradient plateau [s]
+Gz.G = [0; Gz.G_ramp; Gz.G_plat; flipud(Gz.G_ramp)];
+  
+%% Design the post-excitation slice-select refocusing gradient (SSRG)
+Gz.M0 = sum( Gz.G * sys.dt );  % The SSRG needs to have half this area [T*s/m]
+Gz.G_ssrg = -sys.G_max;    % The SSRG should use the maximum hardware to be fast [T/m] 
+Gz.G_ssrg_ramp_time = sys.G_max ./ sys.S_max; % The SSRG should ramp as fast as possible
 
-tmp = 0 : sys.dt : Gz.t_post;  % Refocusing gradient gradient time vector [s]
+error('Need to do some timing and area checks, plus use the new gradient structure in Rad229_Structure_Definitions');
+Gz.t_ssrg = ( Gz.M0 / 2 ) / abs( Gz.G_ssrg ) - Gz.t_ramp;  % Duration of pre-phasing gradient plateau [s]
 
-Gz.G_post_ramp = ( 0 : -Gz.dG : Gz.G_post )';     % Refocusing gradient ramp waveform [T/m]
-Gz.G_post_plat = ones( size(tmp') ) * Gz.G_post;  % Refocusing gradient plateau waveforms [T/m]
+tmp = 0 : sys.dt : Gz.t_ssrg;  % Refocusing gradient gradient time vector [s]
+
+Gz.G_ssrg_ramp = ( 0 : -Gz.dG : Gz.G_ssrg )';     % Refocusing gradient ramp waveform [T/m]
+Gz.G_ssrg_plat = ones( size(tmp') ) * Gz.G_ssrg;  % Refocusing gradient plateau waveforms [T/m]
+
+tmp_M0 = sum( [ Gz.G_ssrg_ramp; Gz.G_ssrg_plat; flipud(Gz.G_ssrg_ramp) ] * sys.dt )
 
 %% Composite the RF and Gradient waveforms and plot them
-Gz.G = [0; Gz.G_ramp; Gz.G; flipud(Gz.G_ramp); Gz.G_post_ramp; Gz.G_post_plat; flipud(Gz.G_post_ramp); 0]; % Gradient amplitude [T/m]
+Gz.G = [0; Gz.G_ramp; Gz.G_plat; flipud(Gz.G_ramp); Gz.G_ssrg_ramp; Gz.G_ssrg_plat; flipud(Gz.G_ssrg_ramp); 0]; % Gradient amplitude [T/m]
 
 % Timing corrections needed to center RF pulse
 delay = zeros( length( Gz.G_ramp ), 1 );
-pad = zeros( length( [Gz.G_post_ramp; Gz.G_post_plat; flipud(Gz.G_post_ramp); Gz.G_ramp] ), 1 );
+pad = zeros( length( [Gz.G_ssrg_ramp; Gz.G_ssrg_plat; flipud(Gz.G_ssrg_ramp); Gz.G_ramp] ), 1 );
 
 RF.B1 = [0; delay; RF.B1; pad; 0]; % B1 amplitude [T]
 Gx.G = zeros ( size ( Gz.G ) );   % Gradient amplitude [T/m]
