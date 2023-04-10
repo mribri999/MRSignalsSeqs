@@ -44,6 +44,7 @@ sys = Rad229_MRI_sys_config;
 if nargin == 0
   acq.FOVy = 100e-3;  % Field-of-view along y-direction [m]
   acq.Ny = 33;        % Number of pixels to discretize FOVy [#]
+%   acq.Ny = 65;        % Number of pixels to discretize FOVy [#]
   acq.y_pos = linspace(-acq.FOVy/2, acq.FOVy/2, acq.Ny); % Define the pixel locations [m]
 end
 acq.dy = acq.FOVy / acq.Ny;     % Pixel dimension along y-direction [m]
@@ -81,7 +82,8 @@ Gy.G = [Gy.G_ramp; Gy.G_plat; flipud(Gy.G_ramp) ];
 %% Plot the waveforms and visualize the encoding per FOV and per pixel
 % Define a subset of PE steps to examine (cubic sampling looks good...)
 m = (acq.Ny-1) / 2;
-PE_IND = unique(round(m * ( linspace(-m, m, 7) ).^3 / (m^3) + (m+1) ) ); % Overly complicated...
+% PE_IND = unique(round(m * ( linspace(-m, m, 7) ).^3 / (m^3) + (m+1) ) ); % Overly complicated...
+PE_IND = 1 : 4 : acq.Ny; % Used during plotting to show a subset of PE steps
 
 % Define the RF and gradient waveforms
 RF.B1 = zeros( size(Gy.G , 1) , 1 );
