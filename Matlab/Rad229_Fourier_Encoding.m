@@ -33,6 +33,8 @@
 %
 %   5) [Advanced] Use this code to estimate the Fourier coefficients for an object, then use the FFT 
 %      to recover an image of the object.
+%
+%   6) [Advanced] Use this code to demonstrate field-of-view aliasing and compressed-sensing artifacts.
 
 function [acq, F] = Rad229_Fourier_Encoding(acq)
 

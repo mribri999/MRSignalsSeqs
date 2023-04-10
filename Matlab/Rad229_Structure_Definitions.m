@@ -59,14 +59,17 @@ sys.dG_max = sys.S_max * sys.dt;  % Maximum gradient increment [T/m]
 Gx(1).G_start = 0;
 Gx(1).G_end = sys.G_max / pi; % Arbitrary gradient amplitude [T/m]
 Gx(1).dur = sys.t_ramp_max;
+Gx(1).name = 'ramp up';
 
 Gx(2).G_start = Gx(1).G_end;
 Gx(2).G_end = Gx(1).G_end;
 Gx(2).dur = 217 * sys.dt; % Arbitrary gradient plateau duration [s]
+Gx(2).name = 'plateau';
 
 Gx(3).G_start = Gx(1).G_end;
 Gx(3).G_end = 0; % Arbitrary gradient amplitude [T/m]
 Gx(3).dur = sys.t_ramp_max;
+Gx(4).name = 'ramp down';
 
 % Generate each gradient waveform segment
 for n = 1 : numel( Gx )
@@ -74,5 +77,7 @@ for n = 1 : numel( Gx )
   Gx(n).G = linspace( Gx(n).G_start , Gx(n).G_end , Gx(n).N_pts );
 end
 
+% I don't really like adding a "final" waveform that is the concat of the
+% elemental waveforms...
 % Combine the gradient waveform segments
 Gx(end+1).G = cat(2,Gx.G);  % The gradient waveform for the FIRST x-gradient event
