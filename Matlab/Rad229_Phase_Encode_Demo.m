@@ -55,11 +55,11 @@ Gy.ky_max = ( (acq.Ny-1) / 2 ) * Gy.dky;  % Maximum phase encode spatial frequen
 
 % Phase encode gradient timing [ramp, then plateau]
 Gy.t_ramp = sys.G_max / sys.S_max;  % Ramp time [s]
-  if ~isinteger(Gy.t_ramp / sys.dt), warning('Gy.t_ramp integer number of sys.dt!'); end
+%   if ~isinteger(Gy.t_ramp / sys.dt), warning('Gy.t_ramp integer number of sys.dt!'); end
 
 % Recall, k = gamma_bar * G * t
 Gy.t_plat = ( Gy.ky_max / (sys.gamma_bar * sys.G_max) ) - Gy.t_ramp;  % Plateau time [s]
-  if ~isinteger(Gy.t_plat / sys.dt), warning('Gy.t_plat integer number of sys.dt!'); end
+%   if ~isinteger(Gy.t_plat / sys.dt), warning('Gy.t_plat integer number of sys.dt!'); end
   if Gy.t_plat<0, error('Gy.t_plat is NEGATIVE!'); end
 
 % Phase encode gradient waveform design

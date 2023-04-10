@@ -61,7 +61,7 @@ Gx.G_plat_amp = ( 2 * acq.RBW ) / ( sys.gamma_bar * acq.FOVx );  % Readout gradi
 Gx.t_acq = acq.Nx / ( 2 * acq.RBW ); % Readout gradient acquisition (plateau) duration [s]
 
 Gx.t_ramp = sys.G_max / sys.S_max;  % Ramp time [s]
-  if ~isinteger(Gx.t_ramp / sys.dt), warning('Gx.t_ramp is NOT an integer number of sys.dt!'); end
+%   if ~isinteger(Gx.t_ramp / sys.dt), warning('Gx.t_ramp is NOT an integer number of sys.dt!'); end
 
 tmp = 0 : sys.dt : Gx.t_acq;  % Readout gradient time vector [s]
 Gx.dG = sys.S_max * sys.dt;  % Readout gradient incremental gradient step [T/m]
