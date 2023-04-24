@@ -47,7 +47,7 @@ sys = Rad229_MRI_sys_config;
 %% Define Frequency Encoding Variables - Most scanners are configured for the user to select RBW, 
 %  FOVx, and Nx on the scanner, which then defines the spatial resolution.
 if nargin == 0
-  acq.RBW = 32e3;     % Receiver pixel bandwidth magnitude [Hz] 
+  acq.RBW = 128e3;     % Receiver pixel bandwidth magnitude [Hz] 
 % **NOTE** acq.RBW is ±RBW on the scanner. A 2x-factor is used in the equations.
   acq.FOVx = 256e-3;  % Field-of-view along x-direction [m]
   acq.Nx = 128;       % Number of pixels to discretize FOVx [#]

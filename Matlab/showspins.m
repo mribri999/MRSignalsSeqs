@@ -116,6 +116,6 @@ cc = [
     0.5000         0         0];
 
 sz = size(cc);
-cind = round(([1:n]/(n+1))*sz(1));
+cind = ceil(([1:n]/(n+1))*sz(1));
 c = cc(cind,:);
 

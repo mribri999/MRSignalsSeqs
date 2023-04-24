@@ -12,7 +12,7 @@ function sys = Rad229_MRI_sys_config
 %  certain phenomena more apparent.
 %
 % sys.B0 = 3.0; sys.B0_units = 'T';                            % Main (B0) field strength [T]
-% sys.B1max = 20e-6; sys.B1max_units = 'T';                    % RF (B1) maximum field strength [T]
+% sys.B1max = 25e-6; sys.B1max_units = 'T';                    % RF (B1) maximum field strength [T]
 % sys.G_max = 10e-3; sys.G_max_unts = 'T/m';                   % Gradient maximum [T/m]
 % sys.S_max = 100; sys.S_max_units = 'T/m/s';                  % Slewrate maximum [T/m/s]
 % sys.dt = 10e-6; sys.dt_units = 's';                          % Waveform time steps (i.e. "raster time") [s]

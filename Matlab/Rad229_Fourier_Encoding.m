@@ -50,8 +50,8 @@ if nargin == 0
   acq.FOVy = 150e-3;  % Field-of-view along y-direction [m]
   acq.Ny = 15;        % Number of pixels to discretize FOVy [#]
     
-  acq.n_kx = 2;
-  acq.n_ky = 3;
+  acq.n_kx = 0;
+  acq.n_ky = 4;
 
   acq.upsamp = 5;        % Upsampling factor for visualizing patterns
 end

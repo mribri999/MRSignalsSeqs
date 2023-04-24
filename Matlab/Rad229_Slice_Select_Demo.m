@@ -29,9 +29,10 @@
 %
 %     1.4) Design the shortest possible TBW = 8 refocusing pulse that doesn't exceed B1,max.
 %
-%     1.5) [Advanced] Make a plot of peak B1 for the shortest duration RF pulses for flip angles 
-%          from 5 to 180 degrees. All pulses should be within the default hardware limits. What do 
-%          you observe about the shape of the curve and the hardware limits encountered.
+%     1.5) [Advanced] Make a plot of B1,max and Gz,max as a function of flip angle for the shortest 
+%          duration RF pulse. Use flip angles from 5 to 180 degrees. All pulses should be within ALL 
+%          default hardware limits. What do you observe about the shape of the curve and the hardware
+%          limits encountered?
 %
 % Gradient Questions:
 %     2.1) What is the thinnest slice you can excite without a gradient warning?
@@ -130,6 +131,6 @@ Gx.G = zeros ( size ( Gz.G ) );    % Gradient amplitude [T/m]
 Gy.G = zeros ( size ( Gz.G ) );    % Gradient amplitude [T/m]
 
 %% Plot the final waveforms
-Rad229_PSD_fig(1e6*RF.B1, Gx.G, Gy.G, Gz.G, sys.dt);
+% Rad229_PSD_fig(1e6*RF.B1, Gx.G, Gy.G, Gz.G, sys.dt);
 
 return
