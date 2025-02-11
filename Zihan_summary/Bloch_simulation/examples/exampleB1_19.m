@@ -24,7 +24,7 @@ freqplot = find(abs(f)<5);			% Plot only range of freqs.
 plot(f(freqplot),abs(rfp(freqplot))*360);	
 title('Small Tip Approximation'); ylabel('Flip (deg)'); xlabel('Freq (kHz)');title('slice-selective RF pulse profile (in freq)')
 
-%% Sequence simulation
+%% Sequence simulation (Hard pulse simulation)
 
 TR = 5;			% ms
 T1 = 500;		% ms
@@ -96,6 +96,7 @@ for z = 1:length(pos)
 				% the RF, so we just get the excitation profile.
 
 end;
+
 
 %% Display
 
