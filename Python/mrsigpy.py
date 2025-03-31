@@ -331,7 +331,37 @@ def displogim(im):
     
     im = im - lowexp
     dispim(im)
-   
+
+def dispkspim(ksp = None):
+# Display the (log) magnitude of k-space and the phase, then inverse FFT and
+# display the magnitude and phase of the image.
+  
+    if ksp is None:
+        ksp = zeros((256,256))      
+        ksp[128,128]=1
+        ksp[127,128]=0.5;
+        ksp[129,128]=0.5;
+
+    im = np.fft.fftshift(np.fft.ifft2(np.fft.fftshift(ksp)))
+    logksp = 10*np.log(abs(ksp)+1)
+
+    fig, axes = plt.subplots(2, 2,figsize=(16,16))
+    axes[0,0].imshow(logksp,cmap="gray")
+    axes[0,0].set_title('k-space log-magnitude')
+    axes[0,0].axis("off")
+    axes[0,1].imshow(np.angle(ksp),cmap="gray")
+    axes[0,1].set_title('k-space phase')
+    axes[0,1].axis("off")
+    axes[1,0].imshow(np.abs(im),cmap="gray")
+    axes[1,0].set_title('Image Magnitude')
+    axes[1,0].axis("off")
+    axes[1,1].imshow(np.angle(im),cmap="gray")
+    axes[1,1].set_title('Image Phase')
+    axes[1,1].axis("off")
+
+    plt.show
+    return im
+
 
 def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
 
