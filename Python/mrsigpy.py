@@ -271,12 +271,51 @@ def cropim(im,sx=None,sy=None):
     if sx < 1: sx = sz[0]*sx
     if sy < 1: sy = sz[0]*sy
         
-    stx = np.floor(sz[1]/2-sx/2)+1
-    sty = np.floor(sz[0]/2-sy/2)+1        
+    sx = np.int(sx)
+    sy = np.int(sy)
+    stx = np.int(np.floor(sz[1]/2-sx/2)+1)
+    sty = np.int(np.floor(sz[0]/2-sy/2)+1)       
     
     return im[sty:sty+sy-1, stx:stx+sx-1]
         
 
+def zpadcrop(im, newsize):
+    sz = np.array(im.shape)  
+    newsize = np.array(newsize)       
+
+    # It would be great to make this 3D, but for now it only works for 2D
+    if np.size(sz) > 2:
+        print("Error:  zpadcrop expects 2D array")        
+
+
+    if np.size(newsize) < np.size(sz):                  
+       # Copy size of extra dimensions from original
+        newsize = np.append(newsize, sz[np.size(newsize):])
+    else:
+        # Crop extra dimensions in new size
+        newsize = newsize[:np.size(sz)]
+
+    #print("Sizes old/new",sz,newsize)
+
+    newim = np.zeros(newsize, dtype=im.dtype)               # New image
+    cz = np.floor(sz / 2).astype(int)                       # Central point of original image
+    ncz = np.floor(newsize / 2).astype(int)                 # New central point
+
+    minsz = np.minimum(sz, newsize)                         # Minimum of sizes
+
+    # Start and end indices for new and old images
+    newst = ncz - np.floor(minsz /2).astype(int)
+    newen = ncz + np.ceil(minsz / 2).astype(int) 
+    oldst = cz - np.floor(minsz / 2).astype(int)
+    olden = cz + np.ceil(minsz / 2).astype(int) 
+
+
+    # Perform the cropping/padding
+    newim[newst[0]:newen[0],newst[1]:newen[1]] = im[oldst[0]:olden[0],oldst[1]:olden[1]]
+    newim = np.squeeze(newim)
+    #print("Returning image size",np.shape(newim))
+
+    return newim
 
 def csens2d(klow):
     sz = np.shape(klow)
@@ -304,21 +343,18 @@ def dispangle(arr):
     dispim(angarr,0,2*np.pi)
     
     
-def dispim(im,low=0.0,high = None):
-    im = np.squeeze(im)
-    
+def dispim(im,low=0,high = None):
+    #im = np.squeeze(im)
+
     if high is None:
         immax = np.max(np.abs(im))
         imstd = np.std(np.abs(im))
         high = immax - 0.5 * imstd
-        
-    scale = 256.0/(high-low)
-    offset = scale*low
-    im = scale * im - offset 
-    plt.figure
-    plt.imshow(np.abs(im),cmap='gray')
-    plt.axis('square')
-    plt.show
+
+    plt.figure()
+    plt.imshow(np.abs(im),cmap="gray",vmin=low,vmax=high)
+    plt.axis("off")
+    plt.show()
     
     
 def displogim(im):
@@ -347,7 +383,7 @@ def dispkspim(ksp = None):
     khigh = np.max(np.abs(logksp))-0.5*np.std(np.abs(logksp))
     imhigh = np.max(np.abs(im))-0.5*np.std(np.abs(im))
 
-    fig, axes = plt.subplots(2, 2,figsize=(16,16))
+    fig, axes = plt.subplots(2, 2,figsize=(12,12))
     axes[0,0].imshow(logksp,cmap="gray",vmin=0,vmax=khigh)
     axes[0,0].set_title('k-space log-magnitude')
     axes[0,0].axis("off")
@@ -1156,6 +1192,18 @@ def circ(radius=100, nx=256,ny=256,cx=0,cy=0):
     mout[mout<r2] = -1000
     mout[mout>r2] = 1000
     mout = (-mout/2000)+1
+    return mout
+
+# Generate image that has a white square
+def sq(side=50, nx=256,ny=256,cx=0,cy=0):
+    mx, my = np.meshgrid(np.arange(-nx/2,nx/2),np.arange(-ny/2,ny/2))
+    mx = mx - cx
+    my = my - cy
+    mout = np.ones((nx,ny))
+    mout[mx>side/2]=0.0
+    mout[mx<-side/2]=0.0
+    mout[my>side/2]=0.0
+    mout[my<-side/2]=0.0
     return mout
 
 # Generate an image with points increasing with angle
