@@ -271,10 +271,10 @@ def cropim(im,sx=None,sy=None):
     if sx < 1: sx = sz[0]*sx
     if sy < 1: sy = sz[0]*sy
         
-    sx = np.int(sx)
-    sy = np.int(sy)
-    stx = np.int(np.floor(sz[1]/2-sx/2)+1)
-    sty = np.int(np.floor(sz[0]/2-sy/2)+1)       
+    sx = int(sx)
+    sy = int(sy)
+    stx = int(np.floor(sz[1]/2-sx/2)+1)
+    sty = int(np.floor(sz[0]/2-sy/2)+1)       
     
     return im[sty:sty+sy-1, stx:stx+sx-1]
         
@@ -464,7 +464,7 @@ def epg_spins2FZ(M = [[0],[0],[1]],trim=0.01):
 
     #!!! Need to check M has 3 rows
     N = np.shape(M)[1] 		# Size of M
-    Q= np.int(np.floor(N/2)+1)	# Max Number of columns of FZ
+    Q= int(np.floor(N/2)+1)	# Max Number of columns of FZ
 
     # -- The following are Eqs. 2-4 from Wiegel 2010:
     # -- Note you could do ONE FFT for Fp and Fm instead, if
@@ -800,7 +800,7 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
 
   R = coilsens.shape[-1]
   Nc = coilsens.shape[-2]
-  Npts = np.int(np.prod(coilsens.shape)/R/Nc) # -- Number of pixels
+  Npts = int(np.prod(coilsens.shape)/R/Nc) # -- Number of pixels
 
   # -- Reshape to pixels x coils x aliased pixels
   print("SENSE Weight Calc - %d pts, %d coils, R=%d" % (Npts,Nc,R))
@@ -900,7 +900,7 @@ def senserecon(signal,sweights):
   imshape = ws[0:-2]
   Nc = ws[-1]
   R = ws[-2]
-  Npts = np.int(np.prod(ws)/Nc/R)
+  Npts = int(np.prod(ws)/Nc/R)
 
   ss = signal.shape
 
