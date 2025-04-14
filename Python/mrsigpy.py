@@ -453,6 +453,10 @@ def epg_relax(FpFmZ, T1, T2, T):
     FpFmZ[2,0] = FpFmZ[2,0]+RR
     return FpFmZ
     
+# Generate spin locations for EPG FZ=>M or M=>FZ transformations
+def epg_spinlocs(nspins=9):
+   z = (np.arange(0,nspins)-np.floor(nspins/2))/nspins
+   return z
 
 
 # Convert from M=[[mx],[my],[mz]] (3xN) to EPG state coefficient matrix 
@@ -467,20 +471,19 @@ def epg_spins2FZ(M = [[0],[0],[1]],trim=0.01):
     # -- speed is an issue.
     M = np.fft.ifftshift(M,axes=1)	
     Mxy = M[:1,:]+ 1j*M[1:2,:]		     # Mx+jMy, to be clear
-    #print("Mxy is %s" % Mxy)
     Fp = np.fft.fft(Mxy,axis=1)/N   	     # FFT to F+ 
-    #Fm = np.fft.fft(np.conj(Mxy),axis=1)/N   # Could do this way...
+    Fm = np.fft.fft(np.conj(Mxy),axis=1)/N   # FFT to F-
     Z  = np.fft.fft(M[2:,:],axis=1)/N        # FFT to F+ states.
 
     # -- Fm coefficients from right-half of Fp, truncate before fliplr
-    Fmc = np.fliplr(np.conj(np.roll(Fp[:1,:],-1,axis=1)[:1,Q-1:]))
+    #Fmc = np.fliplr(np.conj(np.roll(Fp[:1,:],-1,axis=1)[:1,Q-1:]))
     #print("Fp is %s" % Fp)
     #print("Fmc is %s" % Fmc)
     #print("Fm is %s" % Fm)
 
     # !!! Could define Fmm from right half of Fp to check
 
-    FpFmZ = np.concatenate((Fp[:,:Q],Fmc,Z[:,:Q]),axis=0)  # Combine to 3xQ 
+    FpFmZ = np.concatenate((Fp[:,:Q],Fm[:,:Q],Z[:,:Q]),axis=0)  # Combine to 3xQ 
     #print("FpFmZ is %s" % FpFmZ)
      
     FpFmZ = epg_trim(FpFmZ,trim)            # Trim near-zero states.
@@ -549,6 +552,12 @@ def epg_grad(FpFmZ=[[1],[1],[0]], noadd=0, positive = True):
         
     return FpFmZ
 
+# Return equilibrium magnetization
+def epg_m0():
+    FZ=np.array([[0],[0],[1]])
+    return FZ
+
+
 def epg_mgrad(*kw, **kws):
     "Negative gradients"
     return epg_grad(positive = False, *kw, **kws)    
@@ -577,6 +586,8 @@ def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_r
     RR = [[(np.cos(alpha/2.))**2., np.exp(2.*1j*phi)*(np.sin(alpha/2.))**2., -1j*np.exp(1j*phi)*np.sin(alpha)],
       [np.exp(-2.*1j*phi)*(np.sin(alpha/2.))**2., (np.cos(alpha/2.))**2., 1j*np.exp(-1j*phi)*np.sin(alpha)],
       [-1j/2.*np.exp(-1j*phi)*np.sin(alpha), 1j/2.*np.exp(1j*phi)*np.sin(alpha),      np.cos(alpha)]];
+    
+    print(RR)
     
     if return_rotation:
         return RR
