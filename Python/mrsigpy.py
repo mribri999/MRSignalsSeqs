@@ -400,6 +400,15 @@ def dispkspim(ksp = None):
     plt.show
     return im
 
+# -- Print out a matrix (ie M or EPG with a label
+def show_matrix(matrix,label=""):
+  print("")
+  print(label)
+  for row in matrix:
+    formatted_row = ['{:.2f}'.format(x) for x in row]
+    print(' '.join(formatted_row))
+
+
 
 def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
 
