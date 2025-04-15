@@ -26,7 +26,7 @@ from time import sleep
 
 
 
-
+# -- Animate plot (more description to add)
 def animation_plot():
     #%matplotlib notebook  ## RUN THIS LINE IF IN JUPYTER
     import matplotlib.animation
@@ -49,8 +49,17 @@ def animation_plot():
 
 
 
-
-def relax(t,T1 = 4., T2 = 0.1, combine=True):
+# -----------------------------------------------------------------
+# relax(t,T2,T2,combine)
+# -- Calculate relaxation matrix A and vector B
+# INPUT:
+#	t = interval over which relaxation being evaluated.
+#	T1,T2 = relaxation times (same units as t)
+#	combine = if using a 3x4 formalism for A,B.
+# OUTPUT:
+#	A matrix and B vector.
+# -----------------------------------------------------------------
+def relax(t,T1 = 4., T2 = 0.1, combine=False):
     T1 = T1 * 1.
     T2 = T2 * 1.
     t = t * 1.
