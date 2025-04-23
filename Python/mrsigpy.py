@@ -634,6 +634,9 @@ def epg_stim_calc(flips, in_degs = True):
 def ft(dat):
     return np.fft.fftshift(np.fft.fft2(np.fft.fftshift(dat)))
 
+def ift(dat):
+    return np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(dat)))
+
 def gaussian(x,mnx,sigx,y=None,mny=None,sigy=None):
     if (y is None):
       return np.exp(-(x-mnx)**2/(2*sigx**2))/np.sqrt(2*np.pi)/sigx
@@ -1127,31 +1130,22 @@ def epg_showstate(ax,FZ,frac=0,Nspins=19,voxvar=0):
 
 
 
-# epg_show()
-# Uses subplots to graphically show EPG decomposition of magnetisation.
-# Subplots are rows for F+, F- and Z coefficients.  In most epg_ functions
-# a matrix of the same size, "FZ" or "FpFmZ" is used to store the 
-# coefficients.
-#
-# INPUTS:
-#	FZ = EPG coefficient matrix to display
-#	Nspins = Number of spins to use in graphical displays
-#	frac = Additional dephasing.  Essentially adds to n for F_n 
-#              states to show the dephasing/rephasing during gradient.
-#       skipfull = True will not show "full" spins state in row 2, col 1
-#	twists   = True to show as "twists" and "cosines" for F/Z vs
-#		   False to have all vectors start at (0,0,0).
-# OUTPUT:
-#	none (plot is updated)
-#
-
 def epg_show(FZ,Nspins=19,frac=0,skipfull=False,twists=True):
-#    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import    
-#    fig = plt.figure()
-#    ax = fig.gca(projection='3d')   
+  """
+  Uses subplots to graphically show EPG decomposition of magnetisation.
+  Subplots are rows for F+, F- and Z coefficients.  In most epg_ functions
+  a matrix of the same size, "FZ" or "FpFmZ" is used to store the coefficients.
 
-# STARTING to write this!
-# Basic version works... lots to do!
+  Parameters:
+  FZ (array) :  EPG coefficient matrix to display
+
+  Returns:
+  out: none  (Plot is updated)
+
+  Examples:
+  >>> epg_show(np.array([[0,1],[0,0],[0,0.5]]))
+  """
+
 
   m = np.shape(FZ)[0]
   n = np.shape(FZ)[1]

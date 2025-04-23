@@ -7,6 +7,7 @@
 %
 %	INPUT:
 %		M = [Mx My Mz].' representing magnetization vectors.
+#					(across voxel, from 0 to 1)
 %		trim = threshold to trim, 0 for none (default = 0.01)
 %		
 %	OUTPUT:
