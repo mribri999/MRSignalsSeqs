@@ -97,4 +97,6 @@ def Rad229_Fourier_Encoding(acq=None):
         ax.set_ylabel('y [m]')
         plt.show()
 
+
+
 return acq, F
