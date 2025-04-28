@@ -419,38 +419,58 @@ def show_matrix(matrix,label=""):
 
 
 
-def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
+def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot = True):
 
+    if flipangle is None: flipangle = 180*np.ones(20)
     if etl is None: etl = len(flipangle)
-    if esp is None: esp = len(flipangle)
+    if esp is None: esp = 10   # ms
         
     etl = int(etl)
-    esp = int(esp)
+
+    print("ETL",etl)
+    print("ESP",esp)
+    print("flipangle",flipangle)
 
     if len(flipangle)==1 and etl>1 and np.abs(flipangle).all()<np.pi:
         flipangle[1] = flipangle[0]
         flipangle[0] = np.pi*np.exp(1j*angle(flipangle[1])+np.flipangle[1])/2
         
-    P = np.zeros((3,2*etl))
+    P = np.zeros((3,2*etl),dtype=complex)
     P[2,0] = 1
-    Pstore = np.zeros((4*etl, etl))
-    Zstore = np.zeros((2*etl, etl))
+    Pstore = np.zeros((4*etl, etl),dtype=complex)
+    Zstore = np.zeros((2*etl, etl),dtype=complex)
     
-    P = epg_rf(P,np.pi/2, np.pi/2)
-    s = np.zeros(1,etl)
-    
+    P = epg_rf(P,90,90)          # Start with 90 excitation
+    s = np.zeros((1,etl),dtype=complex)
+    etime = esp*np.arange(etl)
+
     for ech in np.arange(etl):
-        P = epg_grelax(P,T1,T2,esp//2,1,0,1,1)
-        P = epg_rf(P,abs(flipangle(ech)),angle(flipangle(ech)))
-        P = epg_grelax(P,T1,T2, eps//2,1,0,1,1)
+        P = epg_grelax(P,T1,T2,esp/2,1,0,1,1)
+        P = epg_rf(P,np.abs(flipangle[ech]),np.angle(flipangle[ech]))
+        P = epg_grelax(P,T1,T2, esp/2,1,0,1,1)
         
-        s[ech] = P[0,0]
-        Pstore[2*etl:r*etl,ech] = P[1]
-        Pstore[:2*etl,ech]=np.flipud(P[0])
-        Zstore[:,ech] = P(2)  #  what does .' mean in matlab??
-        
+        #print("Shape of P",np.shape(P))
+        #print("Shape of P[0,:]",np.shape(P[0,:]))
+        #print("Shape of Pstore",np.shape(Pstore))
+        s[0,ech] = P[0,0]
+        Pstore[2*etl:4*etl,ech] = P[1,:].transpose()
+        Pstore[:2*etl,ech]=np.flipud(P[0,:].transpose())
+        Zstore[:,ech] = P[2,:].transpose()
+    
+    print("Signal is ",s)
+
     if plot:
-        pass
+        plotstate = np.concatenate((Pstore,Zstore),axis=0)
+        fig = plt.figure(figsize=(10,8))	    # Note (width,height)
+        figax = fig.add_subplot(1,2,1)
+        figax.imshow(np.abs(plotstate),cmap="gray",vmin=0,vmax=1)
+        figax.title.set_text("F(top) and Z(bottom) states")
+
+        figax = fig.add_subplot(1,2,2)
+        figax.plot(etime,np.abs(s[0,:]))
+        figax.title.set_text("Signal vs Echo Time")
+        phasediag = plotstate
+
         #room to plot things
     
     return s,phasediag,P
@@ -612,8 +632,44 @@ def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_r
 
 
 
-    
-    
+def epg_grelax(FpFmZ = [[0],[0],[1]], T1=1000,T2=200,T=10,kg=0,D=0,Gon=1,noadd=1):
+#    
+#       Propagate EPG states through a period of relaxation, and
+#       diffusion over an interval T, with or without a gradient.
+#       Leave last 3 blank to exclude diffusion effects.
+#       
+#       INPUT:
+#               FpFmZ = 3xN vector of F+, F- and Z states.
+#               T1,T2 = Relaxation times (s)
+#               T = Time interval (s)
+#           (Optional inputs follow)
+#               kg = k-space traversal due to gradient (rad/m) for diffusion
+#               D = Diffusion coefficient (m^2/s)
+#               Gon = 0 if no gradient on, 1 if gradient on
+#                       (gradient will advance states at the end.)
+#               noadd=1 to not add higher-order states - see epg_grad.m
+#
+#       OUTPUT:
+#               FpFmZ = updated F+, F- and Z states.
+#               EE = decay matrix, 3x3 = diag([E2 E2 E1]);
+#               BV = b-value matrix, 3xN (see FpFmZ) of attenuations.
+#
+#       SEE ALSO:
+#               epg_grad, epg_rf
+#
+#       B.Hargreaves.
+# !!! THIS DOES NOT YET DO DIFFUSION!
+
+    FpFmZ = epg_relax(FpFmZ, T1, T2, T)
+    FpFmZ = epg_grad(FpFmZ,noadd)
+    #print("epg_grelax NOT doing diffusion yet!")
+    return FpFmZ
+
+
+
+
+
+
 
 
 
