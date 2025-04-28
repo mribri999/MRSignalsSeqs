@@ -26,7 +26,7 @@ from time import sleep
 
 
 
-
+# -- Animate plot (more description to add)
 def animation_plot():
     #%matplotlib notebook  ## RUN THIS LINE IF IN JUPYTER
     import matplotlib.animation
@@ -49,8 +49,17 @@ def animation_plot():
 
 
 
-
-def relax(t,T1 = 4., T2 = 0.1, combine=True):
+# -----------------------------------------------------------------
+# relax(t,T2,T2,combine)
+# -- Calculate relaxation matrix A and vector B
+# INPUT:
+#	t = interval over which relaxation being evaluated.
+#	T1,T2 = relaxation times (same units as t)
+#	combine = if using a 3x4 formalism for A,B.
+# OUTPUT:
+#	A matrix and B vector.
+# -----------------------------------------------------------------
+def relax(t,T1 = 4., T2 = 0.1, combine=False):
     T1 = T1 * 1.
     T2 = T2 * 1.
     t = t * 1.
@@ -271,10 +280,10 @@ def cropim(im,sx=None,sy=None):
     if sx < 1: sx = sz[0]*sx
     if sy < 1: sy = sz[0]*sy
         
-    sx = np.int(sx)
-    sy = np.int(sy)
-    stx = np.int(np.floor(sz[1]/2-sx/2)+1)
-    sty = np.int(np.floor(sz[0]/2-sy/2)+1)       
+    sx = int(sx)
+    sy = int(sy)
+    stx = int(np.floor(sz[1]/2-sx/2)+1)
+    sty = int(np.floor(sz[0]/2-sy/2)+1)       
     
     return im[sty:sty+sy-1, stx:stx+sx-1]
         
@@ -400,6 +409,15 @@ def dispkspim(ksp = None):
     plt.show
     return im
 
+# -- Print out a matrix (ie M or EPG with a label
+def show_matrix(matrix,label=""):
+  print("")
+  print(label)
+  for row in matrix:
+    formatted_row = ['{:.2f}'.format(x) for x in row]
+    print(' '.join(formatted_row))
+
+
 
 def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
 
@@ -453,6 +471,10 @@ def epg_relax(FpFmZ, T1, T2, T):
     FpFmZ[2,0] = FpFmZ[2,0]+RR
     return FpFmZ
     
+# Generate spin locations for EPG FZ=>M or M=>FZ transformations
+def epg_spinlocs(nspins=9):
+   z = (np.arange(0,nspins)-np.floor(nspins/2))/nspins
+   return z
 
 
 # Convert from M=[[mx],[my],[mz]] (3xN) to EPG state coefficient matrix 
@@ -460,27 +482,26 @@ def epg_spins2FZ(M = [[0],[0],[1]],trim=0.01):
 
     #!!! Need to check M has 3 rows
     N = np.shape(M)[1] 		# Size of M
-    Q= np.int(np.floor(N/2)+1)	# Max Number of columns of FZ
+    Q= int(np.floor(N/2)+1)	# Max Number of columns of FZ
 
     # -- The following are Eqs. 2-4 from Wiegel 2010:
     # -- Note you could do ONE FFT for Fp and Fm instead, if
     # -- speed is an issue.
     M = np.fft.ifftshift(M,axes=1)	
     Mxy = M[:1,:]+ 1j*M[1:2,:]		     # Mx+jMy, to be clear
-    #print("Mxy is %s" % Mxy)
     Fp = np.fft.fft(Mxy,axis=1)/N   	     # FFT to F+ 
-    #Fm = np.fft.fft(np.conj(Mxy),axis=1)/N   # Could do this way...
+    Fm = np.fft.fft(np.conj(Mxy),axis=1)/N   # FFT to F-
     Z  = np.fft.fft(M[2:,:],axis=1)/N        # FFT to F+ states.
 
     # -- Fm coefficients from right-half of Fp, truncate before fliplr
-    Fmc = np.fliplr(np.conj(np.roll(Fp[:1,:],-1,axis=1)[:1,Q-1:]))
+    #Fmc = np.fliplr(np.conj(np.roll(Fp[:1,:],-1,axis=1)[:1,Q-1:]))
     #print("Fp is %s" % Fp)
     #print("Fmc is %s" % Fmc)
     #print("Fm is %s" % Fm)
 
     # !!! Could define Fmm from right half of Fp to check
 
-    FpFmZ = np.concatenate((Fp[:,:Q],Fmc,Z[:,:Q]),axis=0)  # Combine to 3xQ 
+    FpFmZ = np.concatenate((Fp[:,:Q],Fm[:,:Q],Z[:,:Q]),axis=0)  # Combine to 3xQ 
     #print("FpFmZ is %s" % FpFmZ)
      
     FpFmZ = epg_trim(FpFmZ,trim)            # Trim near-zero states.
@@ -549,6 +570,12 @@ def epg_grad(FpFmZ=[[1],[1],[0]], noadd=0, positive = True):
         
     return FpFmZ
 
+# Return equilibrium magnetization
+def epg_m0():
+    FZ=np.array([[0],[0],[1]])
+    return FZ
+
+
 def epg_mgrad(*kw, **kws):
     "Negative gradients"
     return epg_grad(positive = False, *kw, **kws)    
@@ -606,6 +633,9 @@ def epg_stim_calc(flips, in_degs = True):
 
 def ft(dat):
     return np.fft.fftshift(np.fft.fft2(np.fft.fftshift(dat)))
+
+def ift(dat):
+    return np.fft.ifftshift(np.fft.ifft2(np.fft.ifftshift(dat)))
 
 def gaussian(x,mnx,sigx,y=None,mny=None,sigy=None):
     if (y is None):
@@ -789,7 +819,7 @@ def senseweights(coilsens, noisecov=None,gfactorcalc=False, noisecalc=False):
 
   R = coilsens.shape[-1]
   Nc = coilsens.shape[-2]
-  Npts = np.int(np.prod(coilsens.shape)/R/Nc) # -- Number of pixels
+  Npts = int(np.prod(coilsens.shape)/R/Nc) # -- Number of pixels
 
   # -- Reshape to pixels x coils x aliased pixels
   print("SENSE Weight Calc - %d pts, %d coils, R=%d" % (Npts,Nc,R))
@@ -889,7 +919,7 @@ def senserecon(signal,sweights):
   imshape = ws[0:-2]
   Nc = ws[-1]
   R = ws[-2]
-  Npts = np.int(np.prod(ws)/Nc/R)
+  Npts = int(np.prod(ws)/Nc/R)
 
   ss = signal.shape
 
@@ -1100,31 +1130,22 @@ def epg_showstate(ax,FZ,frac=0,Nspins=19,voxvar=0):
 
 
 
-# epg_show()
-# Uses subplots to graphically show EPG decomposition of magnetisation.
-# Subplots are rows for F+, F- and Z coefficients.  In most epg_ functions
-# a matrix of the same size, "FZ" or "FpFmZ" is used to store the 
-# coefficients.
-#
-# INPUTS:
-#	FZ = EPG coefficient matrix to display
-#	Nspins = Number of spins to use in graphical displays
-#	frac = Additional dephasing.  Essentially adds to n for F_n 
-#              states to show the dephasing/rephasing during gradient.
-#       skipfull = True will not show "full" spins state in row 2, col 1
-#	twists   = True to show as "twists" and "cosines" for F/Z vs
-#		   False to have all vectors start at (0,0,0).
-# OUTPUT:
-#	none (plot is updated)
-#
-
 def epg_show(FZ,Nspins=19,frac=0,skipfull=False,twists=True):
-#    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 unused import    
-#    fig = plt.figure()
-#    ax = fig.gca(projection='3d')   
+  """
+  Uses subplots to graphically show EPG decomposition of magnetisation.
+  Subplots are rows for F+, F- and Z coefficients.  In most epg_ functions
+  a matrix of the same size, "FZ" or "FpFmZ" is used to store the coefficients.
 
-# STARTING to write this!
-# Basic version works... lots to do!
+  Parameters:
+  FZ (array) :  EPG coefficient matrix to display
+
+  Returns:
+  out: none  (Plot is updated)
+
+  Examples:
+  >>> epg_show(np.array([[0,1],[0,0],[0,0.5]]))
+  """
+
 
   m = np.shape(FZ)[0]
   n = np.shape(FZ)[1]

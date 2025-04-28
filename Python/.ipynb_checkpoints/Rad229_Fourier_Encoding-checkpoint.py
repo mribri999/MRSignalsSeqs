@@ -63,6 +63,8 @@ def Rad229_Fourier_Encoding(acq=None):
     else:
         fig_display = False
 
+    print("Warning: TEST.")
+
     # Check the index is within range
     if abs(acq['n_kx']) > ( (acq['Nx'] - 1) / 2 ):
         print("Warning: acq['n_kx'] will exceed kx_max.")
@@ -97,6 +99,4 @@ def Rad229_Fourier_Encoding(acq=None):
         ax.set_ylabel('y [m]')
         plt.show()
 
-
-
-return acq, F
+    return acq, F
