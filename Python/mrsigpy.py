@@ -427,9 +427,9 @@ def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot =
         
     etl = int(etl)
 
-    print("ETL",etl)
-    print("ESP",esp)
-    print("flipangle",flipangle)
+    #print("ETL",etl)
+    #print("ESP",esp)
+    #print("flipangle",flipangle)
 
     if len(flipangle)==1 and etl>1 and np.abs(flipangle).all()<np.pi:
         flipangle[1] = flipangle[0]
@@ -457,7 +457,7 @@ def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot =
         Pstore[:2*etl,ech]=np.flipud(P[0,:].transpose())
         Zstore[:,ech] = P[2,:].transpose()
     
-    print("Signal is ",s)
+    #print("Signal is ",s)
 
     if plot:
         plotstate = np.concatenate((Pstore,Zstore),axis=0)
