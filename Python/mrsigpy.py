@@ -446,7 +446,7 @@ def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot =
 
     for ech in np.arange(etl):
         P = epg_grelax(P,T1,T2,esp/2,1,0,1,1)
-        P = epg_rf(P,np.abs(flipangle[ech]),np.angle(flipangle[ech]))
+        P = epg_rf(P,np.abs(flipangle[ech]),180/np.pi*np.angle(flipangle[ech]))
         P = epg_grelax(P,T1,T2, esp/2,1,0,1,1)
         
         #print("Shape of P",np.shape(P))
