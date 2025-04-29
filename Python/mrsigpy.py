@@ -418,6 +418,94 @@ def show_matrix(matrix,label=""):
     print(' '.join(formatted_row))
 
 
+def epg_gradecho(flipangle = 30, T1 = 1000, T2=200, TR=10, TE=5, rf_dephase=np.pi, rf_inc=0, gspoil=0, delta_freq=0, num_reps=200, plot = True):
+# 
+#
+#       EPG simulation of any gradient-echo sequence:
+#         (a) balanced SSFP
+#         (b) gradient spoiling
+#         (c) reversed gradient spoiling
+#         (d) RF spoiling
+#         (e) Perfect spoiling
+#
+#       INPUT:
+#         flipangle = flip angle in radians [pi/6 radians]
+#         T1,T2 = relaxation times, ms [1000,200 ms]
+#         TR = repetition time, ms [10ms]
+#         TE = echo time (RF to signal), ms [5ms]
+#         rfdphase = amount to increment RF phase per TR, radians [pi radians]
+#         rfdphaseinc = amount to increment rfdphase, per TR, radians [0 rad]
+#         gspoil = 0 to apply no spoiler, 1,-1 spoiler after,before TE [0]
+#         dfreq = off-resonance frequency (Hz) [0Hz]
+#         N = number of repetitions to steady state [200]
+#
+#       NOTE SETTINGS FOR SEQUENCES:
+#         SEQUENCE             rfdphase            rfdphaseinc    gspoil
+#         --===---------------------------------------------------------------
+#        (a) bSSFP           any (shifts profile)         0          0
+#        (b) Grad-spoiled          anything               0          1
+#        (c) Rev.Grad-spoiled      anything               0          -1
+#        (d) RF Spoiled            anything         pi/180*117       1
+#        (e) Perfect spoiling      anything         0 or any         100
+#
+#       All states are kept, for demo purposes, though this
+#       is not really necessary.
+#
+#       OUTPUT:
+#         s = signal
+#         phasediag = display-able phase diagram
+#         FZ = complete record of all states (3xNxN)
+
+    P = np.zeros((3,num_reps),dtype=complex)
+    P[2,0] = 1                  # Start at equilibrium
+    Pstore = np.zeros((2*num_reps,num_reps),dtype=complex)
+    Zstore = np.zeros((num_reps,num_reps),dtype=complex)
+    FZ = np.zeros((3,num_reps,num_reps))
+
+    s = np.zeros((1,num_reps),dtype=complex)
+    rf_phase = 0.0
+
+
+    for rep in np.arange(num_reps):
+        # -- Propagate TE to TR
+        P = epg_grelax(P,T1,T2,TR-TE,0,0,0,1)
+        P = epg_zrot(P,delta_freq*(TR-TE)/1000)
+        if gspoil==1:  P=epg_grad(P,noadd=1)
+        # -- RF Pulse
+        P = epg_rf(P,np.abs(flipangle),rf_phase)
+        # -- Propagate 0 to TE
+        P = epg_grelax(P,T1,T2,TE,0,0,0,1)
+        P = epg_zrot(P,delta_freq*(TE)/1000)
+        if gspoil==-1:  P=epg_grad(P,noadd=1)
+        
+        #print("Shape of P",np.shape(P))
+        #print("Shape of P[0,:]",np.shape(P[0,:]))
+        #print("Shape of Pstore",np.shape(Pstore))
+
+        s[0,rep] = P[0,0]   # F0 state
+        print("Rep,Signal is ",rep,P[0,0])
+        Pstore[num_reps:2*num_reps,rep] = P[1,:].transpose()
+        Pstore[:num_reps,rep]=np.flipud(P[0,:].transpose())
+        Zstore[:,rep] = P[2,:].transpose()
+
+    print("s[0:4] = ",s[0,0:4])
+
+
+    if plot:
+        plotstate = np.concatenate((Pstore,Zstore),axis=0)
+        fig = plt.figure(figsize=(10,8))	    # Note (width,height)
+        figax = fig.add_subplot(1,2,1)
+        figax.imshow(np.abs(plotstate),cmap="gray",vmin=0,vmax=0.5)
+        figax.title.set_text("F(top) and Z(bottom) states")
+
+        rep_time = np.arange(num_reps)*TR
+        figax = fig.add_subplot(1,2,2)
+        figax.plot(rep_time,np.abs(s[0,:]))
+        figax.title.set_text("Signal vs Echo Time")
+        phasediag = plotstate
+
+    return s
+
 
 def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot = True):
 
@@ -440,6 +528,8 @@ def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot =
     Pstore = np.zeros((4*etl, etl),dtype=complex)
     Zstore = np.zeros((2*etl, etl),dtype=complex)
     
+
+
     P = epg_rf(P,90,90)          # Start with 90 excitation
     s = np.zeros((1,etl),dtype=complex)
     etime = esp*np.arange(etl)
@@ -571,8 +661,12 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     return spins
 
   
+def epg_zrot(FpFmZ=[[1],[1],[0]],rot_angle=0):
+# Rotate spin state by rot_angle degrees
+    phasor = np.exp(1j*rot_angle*np.pi/180.0)
+    RR = np.diag([phasor, phasor.conjugate(),1] )
+    return np.matmul(RR,FpFmZ)
     
-
 
 def epg_grad(FpFmZ=[[1],[1],[0]], noadd=0, positive = True):
     if not noadd:
@@ -632,7 +726,7 @@ def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_r
 
 
 
-def epg_grelax(FpFmZ = [[0],[0],[1]], T1=1000,T2=200,T=10,kg=0,D=0,Gon=1,noadd=1):
+def epg_grelax(FpFmZ = [[0],[0],[1]], T1=1000,T2=200,T=10,kg=0,D=0,Gon=True,noadd=1):
 #    
 #       Propagate EPG states through a period of relaxation, and
 #       diffusion over an interval T, with or without a gradient.
@@ -661,7 +755,8 @@ def epg_grelax(FpFmZ = [[0],[0],[1]], T1=1000,T2=200,T=10,kg=0,D=0,Gon=1,noadd=1
 # !!! THIS DOES NOT YET DO DIFFUSION!
 
     FpFmZ = epg_relax(FpFmZ, T1, T2, T)
-    FpFmZ = epg_grad(FpFmZ,noadd)
+    if Gon:
+        FpFmZ = epg_grad(FpFmZ,noadd)
     #print("epg_grelax NOT doing diffusion yet!")
     return FpFmZ
 
