@@ -24,6 +24,21 @@ PLOTON = True
 from time import sleep
 
 
+def magphase(x,y,xlabel=None):
+
+    
+    if xlabel==None:  xlabel = ""
+
+    fig, axes = plt.subplots(2, 1,figsize=(12,12))
+    axes[0,0].figure(figsize=(8,10))
+    axes[0,0].plot(x,np.abs(y))
+    axes[0,0].title('Magnitude')
+    axes[0,0].xlabel(xlabel)
+
+    axes[1,0].plot(x,np.angle(y))
+    axes[1,0].title('Phase')
+    axes[1,0].xlabel(xlabel)
+
 
 
 # -- Animate plot (more description to add)
@@ -418,7 +433,7 @@ def show_matrix(matrix,label=""):
     print(' '.join(formatted_row))
 
 
-def epg_gradecho(flipangle = 30, T1 = 1000, T2=200, TR=10, TE=5, rf_dephase=np.pi, rf_inc=0, gspoil=0, delta_freq=0, num_reps=200, plot = True):
+def epg_gradecho(flipangle = 30, T1 = 1000, T2=200, TR=10, TE=5, rf_dphase=180, rf_inc=0, gspoil=0, delta_freq=0, num_reps=200, plot = True):
 # 
 #
 #       EPG simulation of any gradient-echo sequence:
@@ -460,36 +475,39 @@ def epg_gradecho(flipangle = 30, T1 = 1000, T2=200, TR=10, TE=5, rf_dephase=np.p
     P[2,0] = 1                  # Start at equilibrium
     Pstore = np.zeros((2*num_reps,num_reps),dtype=complex)
     Zstore = np.zeros((num_reps,num_reps),dtype=complex)
-    FZ = np.zeros((3,num_reps,num_reps))
+    FZ = np.zeros((3,num_reps,num_reps),dtype=complex)
 
-    s = np.zeros((1,num_reps),dtype=complex)
-    rf_phase = 0.0
+    s = np.zeros((1,num_reps),dtype=complex)        # Allocate to store signal.
+    rf_phase = 0.0                                  # Start with RF phase register at 0.
 
 
     for rep in np.arange(num_reps):
         # -- Propagate TE to TR
-        P = epg_grelax(P,T1,T2,TR-TE,0,0,0,1)
-        P = epg_zrot(P,delta_freq*(TR-TE)/1000)
-        if gspoil==1:  P=epg_grad(P,noadd=1)
+        P = epg_grelax(P,T1,T2,TR-TE,0,0,0,1)       # Relaxation TE to TR
+        P = epg_zrot(P,360*delta_freq*(TR-TE)/1000)     # Rotation due to off-resonance (TE to TR)
+        if gspoil==1:  P=epg_grad(P,noadd=1)        # Gradient spoiler
         # -- RF Pulse
-        P = epg_rf(P,np.abs(flipangle),rf_phase)
+        rf_phase_last=rf_phase                      # Save, to demodulate echo
+        P = epg_rf(P,np.abs(flipangle),rf_phase+90)    # Excitation/RF pulse
+        rf_phase = rf_phase + rf_dphase             # Linear phase increment
+        rf_dphase = rf_dphase + rf_inc              # For quadratic phase increment
         # -- Propagate 0 to TE
-        P = epg_grelax(P,T1,T2,TE,0,0,0,1)
-        P = epg_zrot(P,delta_freq*(TE)/1000)
-        if gspoil==-1:  P=epg_grad(P,noadd=1)
+        P = epg_grelax(P,T1,T2,TE,0,0,0,1)          # Relaxation 0 to TE
+        P = epg_zrot(P,360*delta_freq*(TE)/1000)        # Off-resonacne 0 to TE
+        if gspoil==-1:  P=epg_grad(P,noadd=1)       # Gradient spoiler (PSIF/reversed)
         
         #print("Shape of P",np.shape(P))
         #print("Shape of P[0,:]",np.shape(P[0,:]))
         #print("Shape of Pstore",np.shape(Pstore))
 
-        s[0,rep] = P[0,0]   # F0 state
-        print("Rep,Signal is ",rep,P[0,0])
-        Pstore[num_reps:2*num_reps,rep] = P[1,:].transpose()
-        Pstore[:num_reps,rep]=np.flipud(P[0,:].transpose())
-        Zstore[:,rep] = P[2,:].transpose()
+        FZ[:,:,rep]=P                                           # Store all FZ states!
+        s[0,rep] = P[0,0]*np.exp(1j*np.pi/180*rf_phase_last)    # F0 state, store signal
+        #print("Rep,Signal is ",rep,P[0,0])
+        Pstore[num_reps:2*num_reps,rep] = P[1,:].transpose()    # Store F- states
+        Pstore[:num_reps,rep]=np.flipud(P[0,:].transpose())     # Store F+ states
+        Zstore[:,rep] = P[2,:].transpose()                      # Store Z states
 
-    print("s[0:4] = ",s[0,0:4])
-
+    
 
     if plot:
         plotstate = np.concatenate((Pstore,Zstore),axis=0)
@@ -504,7 +522,7 @@ def epg_gradecho(flipangle = 30, T1 = 1000, T2=200, TR=10, TE=5, rf_dephase=np.p
         figax.title.set_text("Signal vs Echo Time")
         phasediag = plotstate
 
-    return s
+    return s,FZ
 
 
 def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot = True):
