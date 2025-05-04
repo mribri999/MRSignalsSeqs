@@ -24,6 +24,21 @@ PLOTON = True
 from time import sleep
 
 
+def magphase(x,y,xlabel=None):
+
+    
+    if xlabel==None:  xlabel = ""
+
+    fig, axes = plt.subplots(2, 1,figsize=(12,12))
+    axes[0,0].figure(figsize=(8,10))
+    axes[0,0].plot(x,np.abs(y))
+    axes[0,0].title('Magnitude')
+    axes[0,0].xlabel(xlabel)
+
+    axes[1,0].plot(x,np.angle(y))
+    axes[1,0].title('Phase')
+    axes[1,0].xlabel(xlabel)
+
 
 
 # -- Animate plot (more description to add)
@@ -418,39 +433,152 @@ def show_matrix(matrix,label=""):
     print(' '.join(formatted_row))
 
 
+def epg_gradecho(flipangle = 30, T1 = 1000, T2=200, TR=10, TE=5, rf_dphase=180, rf_inc=0, gspoil=0, delta_freq=0, num_reps=200, plot = True):
+# 
+#
+#       EPG simulation of any gradient-echo sequence:
+#         (a) balanced SSFP
+#         (b) gradient spoiling
+#         (c) reversed gradient spoiling
+#         (d) RF spoiling
+#         (e) Perfect spoiling
+#
+#       INPUT:
+#         flipangle = flip angle in radians [pi/6 radians]
+#         T1,T2 = relaxation times, ms [1000,200 ms]
+#         TR = repetition time, ms [10ms]
+#         TE = echo time (RF to signal), ms [5ms]
+#         rfdphase = amount to increment RF phase per TR, radians [pi radians]
+#         rfdphaseinc = amount to increment rfdphase, per TR, radians [0 rad]
+#         gspoil = 0 to apply no spoiler, 1,-1 spoiler after,before TE [0]
+#         dfreq = off-resonance frequency (Hz) [0Hz]
+#         N = number of repetitions to steady state [200]
+#
+#       NOTE SETTINGS FOR SEQUENCES:
+#         SEQUENCE             rfdphase            rfdphaseinc    gspoil
+#         --===---------------------------------------------------------------
+#        (a) bSSFP           any (shifts profile)         0          0
+#        (b) Grad-spoiled          anything               0          1
+#        (c) Rev.Grad-spoiled      anything               0          -1
+#        (d) RF Spoiled            anything         pi/180*117       1
+#        (e) Perfect spoiling      anything         0 or any         100
+#
+#       All states are kept, for demo purposes, though this
+#       is not really necessary.
+#
+#       OUTPUT:
+#         s = signal
+#         phasediag = display-able phase diagram
+#         FZ = complete record of all states (3xNxN)
 
-def epg_cpmg(flipangle = [np.pi/2,np.pi/2,np.pi/2], etl = None, T1 = 4, T2=.1, esp = None, plot = False):
+    P = np.zeros((3,num_reps),dtype=complex)
+    P[2,0] = 1                  # Start at equilibrium
+    Pstore = np.zeros((2*num_reps,num_reps),dtype=complex)
+    Zstore = np.zeros((num_reps,num_reps),dtype=complex)
+    FZ = np.zeros((3,num_reps,num_reps),dtype=complex)
 
+    s = np.zeros((1,num_reps),dtype=complex)        # Allocate to store signal.
+    rf_phase = 0.0                                  # Start with RF phase register at 0.
+
+
+    for rep in np.arange(num_reps):
+        # -- Propagate TE to TR
+        P = epg_grelax(P,T1,T2,TR-TE,0,0,0,1)       # Relaxation TE to TR
+        P = epg_zrot(P,360*delta_freq*(TR-TE)/1000)     # Rotation due to off-resonance (TE to TR)
+        if gspoil==1:  P=epg_grad(P,noadd=1)        # Gradient spoiler
+        # -- RF Pulse
+        rf_phase_last=rf_phase                      # Save, to demodulate echo
+        P = epg_rf(P,np.abs(flipangle),rf_phase+90)    # Excitation/RF pulse
+        rf_phase = rf_phase + rf_dphase             # Linear phase increment
+        rf_dphase = rf_dphase + rf_inc              # For quadratic phase increment
+        # -- Propagate 0 to TE
+        P = epg_grelax(P,T1,T2,TE,0,0,0,1)          # Relaxation 0 to TE
+        P = epg_zrot(P,360*delta_freq*(TE)/1000)        # Off-resonacne 0 to TE
+        if gspoil==-1:  P=epg_grad(P,noadd=1)       # Gradient spoiler (PSIF/reversed)
+        
+        #print("Shape of P",np.shape(P))
+        #print("Shape of P[0,:]",np.shape(P[0,:]))
+        #print("Shape of Pstore",np.shape(Pstore))
+
+        FZ[:,:,rep]=P                                           # Store all FZ states!
+        s[0,rep] = P[0,0]*np.exp(1j*np.pi/180*rf_phase_last)    # F0 state, store signal
+        #print("Rep,Signal is ",rep,P[0,0])
+        Pstore[num_reps:2*num_reps,rep] = P[1,:].transpose()    # Store F- states
+        Pstore[:num_reps,rep]=np.flipud(P[0,:].transpose())     # Store F+ states
+        Zstore[:,rep] = P[2,:].transpose()                      # Store Z states
+
+    
+
+    if plot:
+        plotstate = np.concatenate((Pstore,Zstore),axis=0)
+        fig = plt.figure(figsize=(10,8))	    # Note (width,height)
+        figax = fig.add_subplot(1,2,1)
+        figax.imshow(np.abs(plotstate),cmap="gray",vmin=0,vmax=0.5)
+        figax.title.set_text("F(top) and Z(bottom) states")
+
+        rep_time = np.arange(num_reps)*TR
+        figax = fig.add_subplot(1,2,2)
+        figax.plot(rep_time,np.abs(s[0,:]))
+        figax.title.set_text("Signal vs Echo Time")
+        phasediag = plotstate
+
+    return s,FZ
+
+
+def epg_cpmg(flipangle = None, etl = None, T1 = 1000, T2=200, esp = None, plot = True):
+
+    if flipangle is None: flipangle = 180*np.ones(20)
     if etl is None: etl = len(flipangle)
-    if esp is None: esp = len(flipangle)
+    if esp is None: esp = 10   # ms
         
     etl = int(etl)
-    esp = int(esp)
+
+    #print("ETL",etl)
+    #print("ESP",esp)
+    #print("flipangle",flipangle)
 
     if len(flipangle)==1 and etl>1 and np.abs(flipangle).all()<np.pi:
         flipangle[1] = flipangle[0]
         flipangle[0] = np.pi*np.exp(1j*angle(flipangle[1])+np.flipangle[1])/2
         
-    P = np.zeros((3,2*etl))
+    P = np.zeros((3,2*etl),dtype=complex)
     P[2,0] = 1
-    Pstore = np.zeros((4*etl, etl))
-    Zstore = np.zeros((2*etl, etl))
+    Pstore = np.zeros((4*etl, etl),dtype=complex)
+    Zstore = np.zeros((2*etl, etl),dtype=complex)
     
-    P = epg_rf(P,np.pi/2, np.pi/2)
-    s = np.zeros(1,etl)
-    
+
+
+    P = epg_rf(P,90,90)          # Start with 90 excitation
+    s = np.zeros((1,etl),dtype=complex)
+    etime = esp*np.arange(etl)
+
     for ech in np.arange(etl):
-        P = epg_grelax(P,T1,T2,esp//2,1,0,1,1)
-        P = epg_rf(P,abs(flipangle(ech)),angle(flipangle(ech)))
-        P = epg_grelax(P,T1,T2, eps//2,1,0,1,1)
+        P = epg_grelax(P,T1,T2,esp/2,1,0,1,1)
+        P = epg_rf(P,np.abs(flipangle[ech]),180/np.pi*np.angle(flipangle[ech]))
+        P = epg_grelax(P,T1,T2, esp/2,1,0,1,1)
         
-        s[ech] = P[0,0]
-        Pstore[2*etl:r*etl,ech] = P[1]
-        Pstore[:2*etl,ech]=np.flipud(P[0])
-        Zstore[:,ech] = P(2)  #  what does .' mean in matlab??
-        
+        #print("Shape of P",np.shape(P))
+        #print("Shape of P[0,:]",np.shape(P[0,:]))
+        #print("Shape of Pstore",np.shape(Pstore))
+        s[0,ech] = P[0,0]
+        Pstore[2*etl:4*etl,ech] = P[1,:].transpose()
+        Pstore[:2*etl,ech]=np.flipud(P[0,:].transpose())
+        Zstore[:,ech] = P[2,:].transpose()
+    
+    #print("Signal is ",s)
+
     if plot:
-        pass
+        plotstate = np.concatenate((Pstore,Zstore),axis=0)
+        fig = plt.figure(figsize=(10,8))	    # Note (width,height)
+        figax = fig.add_subplot(1,2,1)
+        figax.imshow(np.abs(plotstate),cmap="gray",vmin=0,vmax=1)
+        figax.title.set_text("F(top) and Z(bottom) states")
+
+        figax = fig.add_subplot(1,2,2)
+        figax.plot(etime,np.abs(s[0,:]))
+        figax.title.set_text("Signal vs Echo Time")
+        phasediag = plotstate
+
         #room to plot things
     
     return s,phasediag,P
@@ -551,8 +679,12 @@ def epg_FZ2spins(FpFmZ = [[0],[0],[1]],N=None,frac  = 0):
     return spins
 
   
+def epg_zrot(FpFmZ=[[1],[1],[0]],rot_angle=0):
+# Rotate spin state by rot_angle degrees
+    phasor = np.exp(1j*rot_angle*np.pi/180.0)
+    RR = np.diag([phasor, phasor.conjugate(),1] )
+    return np.matmul(RR,FpFmZ)
     
-
 
 def epg_grad(FpFmZ=[[1],[1],[0]], noadd=0, positive = True):
     if not noadd:
@@ -612,8 +744,45 @@ def epg_rf(FpFmZ = [[0],[0],[1]], alpha = 90.,phi = 90, in_degs = True, return_r
 
 
 
-    
-    
+def epg_grelax(FpFmZ = [[0],[0],[1]], T1=1000,T2=200,T=10,kg=0,D=0,Gon=True,noadd=1):
+#    
+#       Propagate EPG states through a period of relaxation, and
+#       diffusion over an interval T, with or without a gradient.
+#       Leave last 3 blank to exclude diffusion effects.
+#       
+#       INPUT:
+#               FpFmZ = 3xN vector of F+, F- and Z states.
+#               T1,T2 = Relaxation times (s)
+#               T = Time interval (s)
+#           (Optional inputs follow)
+#               kg = k-space traversal due to gradient (rad/m) for diffusion
+#               D = Diffusion coefficient (m^2/s)
+#               Gon = 0 if no gradient on, 1 if gradient on
+#                       (gradient will advance states at the end.)
+#               noadd=1 to not add higher-order states - see epg_grad.m
+#
+#       OUTPUT:
+#               FpFmZ = updated F+, F- and Z states.
+#               EE = decay matrix, 3x3 = diag([E2 E2 E1]);
+#               BV = b-value matrix, 3xN (see FpFmZ) of attenuations.
+#
+#       SEE ALSO:
+#               epg_grad, epg_rf
+#
+#       B.Hargreaves.
+# !!! THIS DOES NOT YET DO DIFFUSION!
+
+    FpFmZ = epg_relax(FpFmZ, T1, T2, T)
+    if Gon:
+        FpFmZ = epg_grad(FpFmZ,noadd)
+    #print("epg_grelax NOT doing diffusion yet!")
+    return FpFmZ
+
+
+
+
+
+
 
 
 
