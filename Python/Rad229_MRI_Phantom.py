@@ -2,13 +2,15 @@
 #
 # SYNTAX  - P, M = rad229_mri_phantom(acq)
 #
-# INPUTS  - acq is a structure that needs to contain acq.Nx (number of
-#           pixels defining the *square* phantom matrix size.
+# INPUTS  - acq is a structure that needs to contain:
+#               acq.Nx pixels (number of columns)
+#               acq.Ny pixels (number of rows)
 #
-# OUTPUTS - P - Is the phantom object matrix [acq.Nx x acq.Nx]
+# OUTPUTS - P - Is the phantom object matrix [acq.Ny x acq.Nx]
 #           M - A 3D logical mask matrix. Each layer is an object in the phantom.
 #
 # EXAMPLE - acq = {'Nx': 128}
+#           acq = {'Ny': 129}
 #           P, M = rad229_mri_phantom(acq)
 #
 # DBE@STANFORD.EDU (April 2025) for Rad229
@@ -56,10 +58,16 @@ def rad229_mri_phantom(acq=None):
         return (x_rot / a)**2 + (y_rot / b)**2 <= 1
 
     # Create masks for each object
+    #M = np.zeros((Ny, Nx, len(ellipses)), dtype=bool)
+    #for i, e in enumerate(ellipses):
+    #    mask = ellipse_mask([1] + e[1:], (Ny, Nx))  # Force intensity to 1
+    #    M[:, :, i] = mask
+
+    # Create masks for each object
     M = np.zeros((Ny, Nx, len(ellipses)), dtype=bool)
     for i, e in enumerate(ellipses):
         mask = ellipse_mask([1] + e[1:], (Ny, Nx))  # Force intensity to 1
-        M[:, :, i] = mask
+        M[:, :, i] = np.flipud(mask)  # Flip up-down to match P
 
     # Parse the background and tissues
     Q = np.zeros((Ny, Nx, 3), dtype=bool)
