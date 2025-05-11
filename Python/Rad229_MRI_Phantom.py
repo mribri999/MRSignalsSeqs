@@ -3,10 +3,10 @@
 # SYNTAX  - P, M = rad229_mri_phantom(acq)
 #
 # INPUTS  - acq is a structure that needs to contain:
-#               acq.Nx pixels (number of columns)
-#               acq.Ny pixels (number of rows)
+#               acq['Nx'] pixels (number of columns)
+#               acq['Ny'] pixels (number of rows)
 #
-# OUTPUTS - P - Is the phantom object matrix [acq.Ny x acq.Nx]
+# OUTPUTS - P - Is the phantom object matrix  that is acq['Nx'] by acq['Ny']
 #           M - A 3D logical mask matrix. Each layer is an object in the phantom.
 #
 # EXAMPLE - acq = {'Nx': 128}
