@@ -1607,6 +1607,11 @@ def plotktraj(k,g,s,t):
 
 def vds(smax=15000., gmax=5., T=0.000004, N=20, Fcoeff=np.array((20,0)), rmax=5, z=0,
         gamma = 4258, oversamp = 8):
+# Variable-density spiral design.  
+# 
+# Adapted from Matlab... Please see Matlab vds.m for detailed documentation.
+#
+
     print("vds: smax,gmax,T,N,Fcoeff,rmax",smax,gmax,T,N,Fcoeff,rmax)
     To = T*1./oversamp              # Design time-step (< T)
     oversamp =int(oversamp)
