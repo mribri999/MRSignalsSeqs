@@ -1183,19 +1183,22 @@ def homodyneshow(im,w=16):
     return imhd
 
 def ksquare(center=0, swidth=1.9, kloc=None, tsamp=0.000004, df=0):
+# Generate k-space data for square objects, given a set of locations.
+
     if kloc is None:
         kx,ky = np.meshgrid(np.arange(-128,128)/128*5, np.arange(-128,128)/128*5)
         kloc = kx*i*ky
     sdata = swidth* np.sinc(swidth*np.real(kloc))*np.sinc(swidth*np.imag(kloc))
     kdata = 0*sdata
-    
+
     for q in np.arange(len(center)):
-        thisk = np.exp(1j*2*np.pi*np.real(center(q))*np.real(kloc))*sdata
-        thisk = np.exp(1j*2*np.pi*np.imag(center(q))*np.imag(kloc))*thisk
+        thisk = np.exp(1j*2*np.pi*np.real(center[q])*np.real(kloc))*sdata
+        thisk = np.exp(1j*2*np.pi*np.imag(center[q])*np.imag(kloc))*thisk
         kdata = kdata + thisk
+    print("kdata size",kdata.shape)
         
     ph = np.exp(2*1j*np.pi*tsamp*np.arange(len(kloc))*df)
-    kdata = np.diag(ph)*kdata
+    kdata = np.matmul(np.diag(ph),kdata) 
     return kdata
         
 
@@ -1733,6 +1736,28 @@ def cumint(g, dt):
     """Cumulative integration of the gradient vector."""
     return np.cumsum(g) * dt
 
+
+def rotate_spirals(g,k,N=10):
+# Duplicate spiral waveforms, rotating by 2pi/N each interleaf.
+# Duplicate DCF
+
+    # Vector to duplicate and rotate interleaves
+    srot = np.exp(1j * np.pi * 2 * np.arange(N) / N)
+
+    # Vector to duplicate
+    sdup = np.ones(N)
+
+    # k-space in cm^{-1}
+    ksp = k[:, np.newaxis] * srot  # Broadcasting to multiply k with srot
+    
+    # Vector DCF approximation, assuming vecdcf function is defined
+    d,k = vecdcf(g)  # Call to the vecdcf function
+    dcf = d[:,np.newaxis] * sdup   # Broadcasting to multiply/duplicate
+    
+    return ksp,dcf
+
+
+
 def vecdcf(g, k=None, N=None, res=None, FOV=None):
     
 
@@ -1841,9 +1866,10 @@ def gridmat(ksp, kdat, dcf, gridsize=256):
         gridy = smaty + ikyi[p]  # same in y
 
         # Distance index (array), to use for kernel lookup
-        dist = np.round(np.sqrt((gridx - kxi[p]) ** 2 + (gridy - kyi[p]) ** 2) / dr).astype(int) + 1
+        dist = np.round(np.sqrt((gridx - kxi[p]) ** 2 + (gridy - kyi[p]) ** 2) / dr).astype(int) 
 
-        sgrid[:] = kdat[p] * kerntab[dist.flatten()]  # Convolve sample with kernel
+        for q in range(len(sgrid)):
+            sgrid[q] = kdat[p] * kerntab[dist[q]]   # convolve sample with kernel
 
         # Add the 'small-grid' into the padded grid
         padgrid[ikxi[p] - sgridext:ikxi[p] + sgridext + 1, ikyi[p] - sgridext:ikyi[p] + sgridext + 1] += sgrid
