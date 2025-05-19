@@ -1609,7 +1609,7 @@ def vds(smax=15000., gmax=5., T=0.000004, N=20, Fcoeff=np.array((20,0)), rmax=5,
         gamma = 4258, oversamp = 8):
     print("vds: smax,gmax,T,N,Fcoeff,rmax",smax,gmax,T,N,Fcoeff,rmax)
     To = T*1./oversamp              # Design time-step (< T)
-    oversamp =np.int(oversamp)
+    oversamp =int(oversamp)
     
     q0 = 0.             # q0 is the spiral angle (atan(ky/kx))
     q1 = 0.             # q1 is the first time derivative of spiral angle
@@ -1652,7 +1652,7 @@ def vds(smax=15000., gmax=5., T=0.000004, N=20, Fcoeff=np.array((20,0)), rmax=5,
     time = time[oversamp//2:count:oversamp]
     
     # Truncate to multiple of 4 samples
-    ltheta = np.int(4*np.floor(len(theta)/4))
+    ltheta = int(4*np.floor(len(theta)/4))
     r = r[:ltheta]
     theta = theta[:ltheta]
     time = time[:ltheta]
