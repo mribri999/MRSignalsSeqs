@@ -1502,8 +1502,8 @@ def whirl(N,res,fov, tsample = 0.000004,
     # pre allocate space?
     maxng = 10000*upsamp
     if maxng > len(g):
-        g = np.pad(g, maxng-len(g), 'constant').astype(np.complex)
-        k = np.pad(k, maxng-len(k), 'constant').astype(np.complex)
+        g = np.pad(g, maxng-len(g), 'constant').astype(np.complex128)
+        k = np.pad(k, maxng-len(k), 'constant').astype(np.complex128)
     Grec = np.array(g)
     Grec[10000] = 0
     phirec = 0*Grec
@@ -1791,7 +1791,7 @@ def vecdcf(g, k=None, N=None, res=None, FOV=None):
 
     if N is not None:
         dcfall = np.zeros((len(dcf), N))
-        kall = np.zeros((len(dcf), N), dtype=np.complex_)
+        kall = np.zeros((len(dcf), N), dtype=np.complex128)
         for p in range(N):
             ph = np.exp(1j * 2 * np.pi * (p - 1) / N)
             kall[:, p] = k * ph
@@ -1837,7 +1837,7 @@ def gridmat(ksp, kdat, dcf, gridsize=256):
 
     # Allocate grid to accumulate data
     padgridsize = gridsize + 4 * kwid  # Padded grid to avoid errors
-    padgrid = np.zeros((padgridsize, padgridsize), dtype=np.complex_)  # Padded grid
+    padgrid = np.zeros((padgridsize, padgridsize), dtype=np.complex128)  # Padded grid
 
     # Sample Density correction
     kdat = kdat * dcf  # Density correct (Simple!)
@@ -1858,7 +1858,7 @@ def gridmat(ksp, kdat, dcf, gridsize=256):
     # Make a small matrix that completely encompasses the grid points
     sgridext = int(np.ceil(kwid / 2)) + 1  # Size of small grid around sample
     smaty, smatx = np.meshgrid(np.arange(-sgridext, sgridext + 1), np.arange(-sgridext, sgridext + 1))
-    sgrid = np.zeros_like(smatx, dtype=np.complex_)  # Allocate
+    sgrid = np.zeros_like(smatx, dtype=np.complex128)  # Allocate
 
     # Go through k-space samples to do convolution
     for p in range(len(ksp)):
