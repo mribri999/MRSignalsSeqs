@@ -2,13 +2,15 @@
 #
 # SYNTAX  - P, M = rad229_mri_phantom(acq)
 #
-# INPUTS  - acq is a structure that needs to contain acq.Nx (number of
-#           pixels defining the *square* phantom matrix size.
+# INPUTS  - acq is a structure that needs to contain:
+#               acq['Nx'] pixels (number of columns)
+#               acq['Ny'] pixels (number of rows)
 #
-# OUTPUTS - P - Is the phantom object matrix [acq.Nx x acq.Nx]
+# OUTPUTS - P - Is the phantom object matrix  that is acq['Nx'] by acq['Ny']
 #           M - A 3D logical mask matrix. Each layer is an object in the phantom.
 #
 # EXAMPLE - acq = {'Nx': 128}
+#           acq = {'Ny': 129}
 #           P, M = rad229_mri_phantom(acq)
 #
 # DBE@STANFORD.EDU (April 2025) for Rad229
@@ -20,11 +22,13 @@ from skimage.transform import resize
 def rad229_mri_phantom(acq=None):
     if acq is None:
         acq = {'Nx': 128} # Define the matrix size (will be square)
+        acq = {'Ny': 129}
     
     Nx = acq['Nx']
+    Ny = acq['Ny']
 
     # Generate base phantom
-    P = resize(shepp_logan_phantom(), (Nx, Nx), mode='reflect', anti_aliasing=True)
+    P = resize(shepp_logan_phantom(), (Ny, Nx), mode='reflect', anti_aliasing=True)
 
     # Phantom ellipses parameters (matching MATLAB's 'modified shepp-logan')
     # Parameters: [intensity, a, b, x0, y0, phi] similar to MATLAB phantom
@@ -54,13 +58,19 @@ def rad229_mri_phantom(acq=None):
         return (x_rot / a)**2 + (y_rot / b)**2 <= 1
 
     # Create masks for each object
-    M = np.zeros((Nx, Nx, len(ellipses)), dtype=bool)
+    #M = np.zeros((Ny, Nx, len(ellipses)), dtype=bool)
+    #for i, e in enumerate(ellipses):
+    #    mask = ellipse_mask([1] + e[1:], (Ny, Nx))  # Force intensity to 1
+    #    M[:, :, i] = mask
+
+    # Create masks for each object
+    M = np.zeros((Ny, Nx, len(ellipses)), dtype=bool)
     for i, e in enumerate(ellipses):
-        mask = ellipse_mask([1] + e[1:], (Nx, Nx))  # Force intensity to 1
-        M[:, :, i] = mask
+        mask = ellipse_mask([1] + e[1:], (Ny, Nx))  # Force intensity to 1
+        M[:, :, i] = np.flipud(mask)  # Flip up-down to match P
 
     # Parse the background and tissues
-    Q = np.zeros((Nx, Nx, 3), dtype=bool)
+    Q = np.zeros((Ny, Nx, 3), dtype=bool)
     Q[:, :, 0] = ~M[:, :, 0] & ~M[:, :, 1]     # Background
     Q[:, :, 1] = M[:, :, 0] & M[:, :, 1]       # White-matter
     Q[:, :, 2] = M[:, :, 0] & ~M[:, :, 1]      # Skull

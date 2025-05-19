@@ -79,4 +79,3 @@ end
 fprintf(' Done  TE = %f\n', numel(res)*dt*1e3+params.T_readout);
 
 end
-
