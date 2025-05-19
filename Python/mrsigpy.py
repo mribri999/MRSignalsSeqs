@@ -8,6 +8,7 @@
 # learning and low-to-medium complexity MRI simulations.
 #
 # Derived from Stanford RAD229 Class (Matlab) functions
+# see https://web.stanford.edu/class/rad229
 #
 # Created on Tue Nov 19 08:57:48 2019
 # authors: Joshua Kaggie, Brian Hargreaves
@@ -1554,60 +1555,111 @@ def whirl(N,res,fov, tsample = 0.000004,
     
     return g, g1, g2, g3
         
-        
+def plotktraj(k,g,s,t):
+# Just plot a k-space trajectory given these parameters.
+# Plot kx-ky
+    plt.figure(figsize=(8,10))
+    plt.subplot(2,2,1)
+    plt.plot(np.real(k),np.imag(k),label='k-space') 
+    plt.title('k-space Trajectory')
+    plt.xlabel('kx') 
+    plt.ylabel('ky') 
+    plt.grid()
+    plt.axis('square')
 
-def vds(smax, gmax, T, N, Fcoeff, rmax, z=0,
+    # Plot k vs time
+    plt.subplot(2,2,2)
+    plt.plot(t,np.real(k),label='kx') 
+    plt.plot(t,np.imag(k),label='ky') 
+    plt.plot(t,np.abs(k),label='|k|') 
+    plt.title('k-space vs t')
+    plt.xlabel('Time')
+    plt.ylabel('k-space (/cm)')
+    plt.grid()
+    plt.legend()
+
+    # Plot g vs time
+    plt.subplot(2,2,3)
+    plt.plot(t,np.real(g),label='gx') 
+    plt.plot(t,np.imag(g),label='gy') 
+    plt.plot(t,np.abs(g),label='|g|') 
+    plt.title('Gradient vs t')
+    plt.xlabel('Time')
+    plt.ylabel('Gradient (G/cm)')
+    plt.grid()
+    plt.legend()
+
+    # Plot s vs time
+    plt.subplot(2,2,4)
+    plt.plot(t,np.real(s),label='sx') 
+    plt.plot(t,np.imag(s),label='sy') 
+    plt.plot(t,np.abs(s),label='|s|') 
+    plt.title('Slew vs t')
+    plt.xlabel('Time')
+    plt.ylabel('Slew Rate (G/cm/s)')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+def vds(smax=15000., gmax=5., T=0.000004, N=20, Fcoeff=np.array((20,0)), rmax=5, z=0,
         gamma = 4258, oversamp = 8):
+    print("vds: smax,gmax,T,N,Fcoeff,rmax",smax,gmax,T,N,Fcoeff,rmax)
+    To = T*1./oversamp              # Design time-step (< T)
+    oversamp =np.int(oversamp)
     
-    To = T*1./oversamp
-    
-    q0 = 0.
-    q1 = 0.
-    
-    Nprepare = 10000
+    q0 = 0.             # q0 is the spiral angle (atan(ky/kx))
+    q1 = 0.             # q1 is the first time derivative of spiral angle
+    r0 = 0              # r0 is the k-space radius
+    r1 = 0              # r1 is the first time deriviative of r0
+    t = 0               # t is the sample time.
+    count = 0
+
+    Nprepare = 1000000    
     theta = np.zeros(Nprepare)
-    r = np.zeros(Nprepare)
-    
-    r0 = 0
-    r1 = 1
-    
+    r = np.zeros(Nprepare)          # k-space radius
     time = np.zeros(Nprepare)
-    t = 0
-    count = 1
-    
-    theta = np.zeros(Nprepare)
-    r = np.zeros(Nprepare)
-    time = np.zeros(Nprepare)
-        
-    while r < rmax:
-        print('Error findq2r2 does not exist')
-        
+            
+    while r0 < rmax:
+        #print('Error findq2r2 does not exist')
+        q2,r2 = findq2r2(smax,gmax,r0,r1,To,T,N,Fcoeff,rmax,z);
+        #print("q0,q1,q2,r0,r1,r2 = ",q0,q1,q2,r0,r1,r2)
+
+        # Update from 2nd derivative (simple integration, oversampled so adequate)
         q1 = q1+q2*To
-        q0 = q0 + q1*To
-        t = t+To
+        q0 = q0+q1*To
         r1 = r1+r2*To
-        r0 = r0 + r1*To
-        
+        r0 = r0+r1*To
+        t = t+To
+
+        # Store trajectory variables        
         count = count+1
         theta[count] = q0
         r[count] = r0
         time[count] = t
         
-        if np.remainder(count,100) == 0:
-            print('points')
-    r = r[oversamp/2:count:oversamp]
-    theta = theta[oversamp/2:count:oversamp]
-    time = time[oversamp/2:count:oversamp]
+        # Print status periodically, as this can take many seconds.
+        if np.remainder(count+1,1000) == 0:
+            print(count+1,'points, |k|=',r0)
+
     
-    ltheta = 4*np.floor(len(theta)/4)
+    # Subsample the time arrays from oversampled arrays
+    r = r[oversamp//2:count:oversamp]
+    theta = theta[oversamp//2:count:oversamp]
+    time = time[oversamp//2:count:oversamp]
+    
+    # Truncate to multiple of 4 samples
+    ltheta = np.int(4*np.floor(len(theta)/4))
     r = r[:ltheta]
     theta = theta[:ltheta]
     time = time[:ltheta]
     
-    r = r*np.exp(1j*theta)
-    g = 1./gamma*(np.gradient(g))/T
-    
-    s = np.gradient(g)
+    # Constuct the k space trajectory from kr and ktheta
+    r = r*np.exp(1j*theta)              # complex k-space trajectory (k)
+    g = 1./gamma*(np.gradient(r))/T     # Gradient (G/cm)
+    s = np.gradient(g)/T                # Slew rate 
+
+    return r,g,s,time
     
 
 def qdf(a,b,c):
@@ -1615,47 +1667,122 @@ def qdf(a,b,c):
 
 
 def findq2r2(smax, gmax, r, r1, T, Ts, N, Fcoeff, rmax, z):
+    #print("Findq2r2:  ",r,r1)
     gamma = 4258.
     smax = smax + z*gmax
     F= 0.
     dFdr = 0
-    for rind in np.arange(Fcoeff):
-        F = F+Fcoeff[rind]*(r/rmax)**(rind-1)
-        if rind>1:
-            dFdr = dFdr + (rind-1)*Fcoeff[rind]*(r/rmax)**(rind-2)/rmax
-            
-    GmaxFOV = 1./gamma/F/Ts
-    Gmax = np.min([GmaxFOV, gmax])
-    maxr1 = np.sqrt((gamma*Gmax)**2)/(1+(2*p.pi*F*r/N)**2)
+    # F is a polynomial sum(Fcoeff_i (r/rmax)**i)
+    # dFdr is computed from this
+    for rind in np.arange(Fcoeff.size):         
+        F = F+Fcoeff[rind]*(r/rmax)**(rind)
+        if rind>0:
+            dFdr = dFdr + (rind)*Fcoeff[rind]*(r/rmax)**(rind-1)/rmax
 
-    if r1>maxr1:
+            
+    GmaxFOV = 1./gamma/F/Ts             # Maximum G based on FOV/sample spacing
+    Gmax = np.min([GmaxFOV, gmax])      # Lower of 2 limits
+    maxr1 = np.sqrt((gamma*Gmax)**2 / (1+(2*np.pi*F*r/N)**2))
+    
+    #print("max gradient r,r1,maxr1,GmaxFOV,Gmax = ",r,r1,maxr1,GmaxFOV,Gmax)
+    #print("dFdr,GmaxFOV,Gmax,maxr1,r1 = ",dFdr,GmaxFOV,Gmax,maxr1,r1)
+    if r1>maxr1:                # Gradient amplitude limited.  Just run r upward as
+                                # much as allowable without exceeding max gradient.
         r2 = (maxr1-r1)/T
-        
+        #print("r1>maxr1")
+    else:  
         twopiFoN = 2*np.pi*F/N
         twopiFoN2 = twopiFoN**2
         
         A = 1+ twopiFoN2*r*r
         
         B = 2*twopiFoN2*r*r1*r1 + 2*twopiFoN2/F*dFdr*r*r*r1*r1 + 2*z*r1 + 2*twopiFoN2*r1*r
-        C1 = twopiFoN2**2*r*r*r1**4 + 4*twopiFoN2*r1**4 + (2*pi/N*dFdr)**2*r*r*r1**4 + 4*twopiFoN2/F*dFdr*r*r1**4 - (gamma)**2*smax**2
+        C1 = twopiFoN2**2*r*r*r1**4 + 4*twopiFoN2*r1**4 + (2*np.pi/N*dFdr)**2*r*r*r1**4 + 4*twopiFoN2/F*dFdr*r*r1**4 - (gamma)**2*smax**2
         C2 = z*(z*r1**2 + z*twopiFoN2*r1**2 + 2*twopiFoN2*r1**3*r + 2*twopiFoN2/F*dFdr*r1**3*r)
         C = C1+C2;
 
-        theroots = np.roots((A,B,C))
+        #print("QDF A,B,C =",A,B,C)
+        theroots = qdf(A,B,C)
+        #print("theroots = ",theroots)
         r2 = np.real(theroots[0])
         
-        slew = 1./gamma*(r2*twopiFoN2*r*r1**2+1j*twopiFoN*(2*r1**2+r*r2+dFdr/F*r*r1**2))
+        slew = 1./gamma*(r2-twopiFoN2*r*r1**2+1j*twopiFoN*(2*r1**2+r*r2+dFdr/F*r*r1**2))
         sr = np.abs(slew)/smax
-        
+        #print('slew',slew)
+            
         if np.abs(slew)/smax > 1.01:
             print('slew',slew)
             
-    q2 = 2*np.pi/N*dFdr*r1**2+2*np.pi/F/N*r2
+    q2 = 2*np.pi/N*dFdr*r1**2 + 2*np.pi*F/N*r2
+    #print("q2,N,dFdr,r1,r2",q2,N,dFdr,r1,r2)
     
     return q2, r2
 
+def qdf(a,b,c):
+# Simple quadratic formula for roots, note larger root first (if real)
+# np.roots does not seem to return in consistent order(?)
 
-def vecdcf(g,k = None,N = None,res = None,FOV = None):
+    d = b**2 - 4*a*c;
+    roots=np.zeros(2)
+    roots[0] = (-b + np.sqrt(d))/(2*a);
+    roots[1] = (-b - np.sqrt(d))/(2*a);
+    return roots
+
+
+def cumint(g, dt):
+    """Cumulative integration of the gradient vector."""
+    return np.cumsum(g) * dt
+
+def vecdcf(g, k=None, N=None, res=None, FOV=None):
+    
+
+    # Calculate k-space from gradients
+    if k is None or len(k) == 0:  # If only g is given
+        k = cumint(g, 0.5)
+        k = k * 0.5 / np.max(np.abs(k))
+
+    if np.max(np.size(k)) == 1:
+        Nsamps = k
+        k = cumint(g[:Nsamps], 0.5)
+        k = k * 0.5 / np.max(np.abs(k))
+
+    Nsamps = len(k)
+
+    # Calculate Density Correction Factors using Vector Approach
+    g3 = np.vstack((np.real(g), np.imag(g), np.zeros_like(g))).T
+    k3 = np.vstack((np.real(k), np.imag(k), np.zeros_like(k))).T
+    dcf = np.zeros_like(k)
+
+    for m in range(Nsamps):
+        dcf[m] = np.linalg.norm(np.cross(g3[m], k3[m]))
+        if np.abs(k[m]) > 0:
+            dcf[m] /= np.abs(k[m])
+        else:
+            dcf[m] = 0
+
+    # If N, res, FOV given, replicate for N interleaves
+    dcf = dcf.flatten()
+    k = k.flatten()
+
+    if N is not None:
+        dcfall = np.zeros((len(dcf), N))
+        kall = np.zeros((len(dcf), N), dtype=np.complex_)
+        for p in range(N):
+            ph = np.exp(1j * 2 * np.pi * (p - 1) / N)
+            kall[:, p] = k * ph
+            dcfall[:, p] = dcf
+        dcf = dcfall
+        k = kall * FOV / res / 256
+
+    return dcf, k
+
+
+
+
+
+
+
+
     if np.shape(g)[1]==2:
         g = g[:,0]+1j*g[:,1]
         
@@ -1675,6 +1802,76 @@ def vecdcf(g,k = None,N = None,res = None,FOV = None):
     # I'm afraid I have to stop for the moment.  Pull!
 
 
+def gridmat(ksp, kdat, dcf, gridsize=256):
+    ksp = np.asarray(ksp).flatten()  # Translate to 1D vector
+    dcf = np.asarray(dcf).flatten()
+    kdat = np.asarray(kdat).flatten()
+
+    kwid = 3  # Convolution kernel width
+    kbbeta = 4.2  # Kaiser-bessel Beta
+
+    # Allocate grid to accumulate data
+    padgridsize = gridsize + 4 * kwid  # Padded grid to avoid errors
+    padgrid = np.zeros((padgridsize, padgridsize), dtype=np.complex_)  # Padded grid
+
+    # Sample Density correction
+    kdat = kdat * dcf  # Density correct (Simple!)
+
+    # Use a lookup-table for grid kernel
+    dr = 0.01
+    r = np.arange(0, 2 * kwid + dr, dr)  # input to kaiser-bessel
+    kerntab = kb(r, kwid, kbbeta)  # Kaiser-Bessel function
+
+    # Scale k-space points to grid units
+    kxi = np.real(ksp) * (gridsize - 1) + padgridsize / 2  # Scale kx to grid units
+    kyi = np.imag(ksp) * (gridsize - 1) + padgridsize / 2  # Scale ky to grid units
+
+    # Round to nearest grid point
+    ikxi = np.round(kxi).astype(int)  # Closest integer
+    ikyi = np.round(kyi).astype(int)  # Closest integer
+
+    # Make a small matrix that completely encompasses the grid points
+    sgridext = int(np.ceil(kwid / 2)) + 1  # Size of small grid around sample
+    smaty, smatx = np.meshgrid(np.arange(-sgridext, sgridext + 1), np.arange(-sgridext, sgridext + 1))
+    sgrid = np.zeros_like(smatx, dtype=np.complex_)  # Allocate
+
+    # Go through k-space samples to do convolution
+    for p in range(len(ksp)):
+        gridx = smatx + ikxi[p]  # grid of 'closest' integer pts
+        gridy = smaty + ikyi[p]  # same in y
+
+        # Distance index (array), to use for kernel lookup
+        dist = np.round(np.sqrt((gridx - kxi[p]) ** 2 + (gridy - kyi[p]) ** 2) / dr).astype(int) + 1
+
+        sgrid[:] = kdat[p] * kerntab[dist.flatten()]  # Convolve sample with kernel
+
+        # Add the 'small-grid' into the padded grid
+        padgrid[ikxi[p] - sgridext:ikxi[p] + sgridext + 1, ikyi[p] - sgridext:ikyi[p] + sgridext + 1] += sgrid
+
+    # Extract the main grid from the padded grid
+    dat = padgrid[2 * kwid:2 * kwid + gridsize, 2 * kwid:2 * kwid + gridsize]
+    
+    return dat
+
+
+
+from scipy.special import iv  # Bessel function of the first kind
+
+def kb(u, w, beta):
+    if len(locals()) < 3:
+        raise ValueError('Not enough arguments -- 3 arguments required.')
+    
+    if len(np.shape(w)) > 0 and np.size(w) > 1:
+        raise ValueError('w should be a single scalar value.')
+            
+    y = np.zeros_like(u)  # Allocate space.
+    uz = np.where(np.abs(u) < w / 2)[0]  # Indices where u < w/2.
+
+    if len(uz) > 0:  # Calculate y at indices uz.
+        x = beta * np.sqrt(1 - (2 * u[uz] / w) ** 2)  # Argument - see Jackson '91.
+        y[uz] = iv(0, x) / w  # Bessel function of the first kind.
+
+    return np.real(y)  # Force to be real.
 
 
     
